@@ -1,0 +1,60 @@
+users - Collection
+	- 9228403243 - docId
+		- Contact_No	- 9228403243
+		- Password		- Encrypted("1234")
+		- Address		- C-603, Nova Shitalnath, Opp. Omkarsuri Aradhna Bhavan, Nr. Pal RTO
+		- Area			- Pal
+		- Native_Place	- Limbdi
+		- Members
+			0: Main_Member
+				- Mobile_No			- 9228403243
+				- Name				- DIMPALKUMAR JASVANTLAL SHAH
+				- DOB				- 24/12/1969
+				- Profile_Pic		- https://firebasestorage.googleapis.com/v0/b/community-app-c1b2b.appspot.com/o/profile_pic%2Favatar.png?alt=media&token=4a103c26-9ce1-453b-b922-a49cee1c650b
+				- Relation			- Self
+				- Gender			- MALE
+				- Blood_Group		- O-
+				- Marital_Status	- Married
+				- Education			- 10th Pass
+				- Occupation		- Retail Cloth Shop
+				- Office_Contact	- 9228403243
+				- Office_Address	- 2, Pramukh Darshan Apt., Nr. Arogya kendra, Katargam Road, Katargam, Surat
+			1: Member
+				- Mobile_No			- 8128036482
+				- Name				- SHILPABEN DIMPALKUMAR SHAH
+				- DOB				- 12/09/1973
+				- Profile_Pic		- https://firebasestorage.googleapis.com/v0/b/community-app-c1b2b.appspot.com/o/profile_pic%2Favatar.png?alt=media&token=4a103c26-9ce1-453b-b922-a49cee1c650b
+				- Relation			- Wife
+				- Gender			- FEMALE
+				- Blood_Group		- A-
+				- Marital_Status	- Married
+				- Education			- 12th Pass
+				- Occupation		- Home-Maker
+				- Office_Contact	- 
+				- Office_Address	- 
+			2: Member
+				- Mobile_No			- 8469368554
+				- Name				- JAINAM DIMPALKUMAR SHAH
+				- DOB				- 21/04/1998
+				- Profile_Pic		- https://firebasestorage.googleapis.com/v0/b/community-app-c1b2b.appspot.com/o/profile_pic%2Favatar.png?alt=media&token=4a103c26-9ce1-453b-b922-a49cee1c650b
+				- Relation			- Son
+				- Gender			- MALE
+				- Blood_Group		- 
+				- Marital_Status	- Un-Married
+				- Education			- B.E. Computer
+				- Occupation		- Software Developer
+				- Office_Contact	- 
+				- Office_Address	- TCS Ahmedabad
+			3: Member
+				- Mobile_No			- 
+				- Name				- NANCY DIMPALKUMAR SHAH
+				- DOB				- 05/11/1998
+				- Profile_Pic		- https://firebasestorage.googleapis.com/v0/b/community-app-c1b2b.appspot.com/o/profile_pic%2Favatar.png?alt=media&token=4a103c26-9ce1-453b-b922-a49cee1c650b
+				- Relation			- Daughter
+				- Gender			- FEMALE
+				- Blood_Group		- 
+				- Marital_Status	- Un-Married
+				- Education			- Pursuing BCA
+				- Occupation		- 
+				- Office_Contact	- 
+				- Office_Address	- 

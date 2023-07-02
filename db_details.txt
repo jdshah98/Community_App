@@ -1,0 +1,26 @@
+Member Data
+	- Profile Pic
+	- Name
+	- Mobile No
+	- Age
+	- DOB
+	- Relation
+	- Gender
+	- Blood Group
+	- Marital Status
+	- Education
+	- Occupation
+	- Office Contact(If any)
+	- Office Address(If any)
+
+Registered Users
+	- Contact No
+	- Password
+	- Home Address
+	- Area
+	- Native Place
+	- Members
+	[
+		0: MainMember,
+		.. Add other Members
+	]
