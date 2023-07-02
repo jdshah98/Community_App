@@ -5,11 +5,13 @@ import 'package:community_app/app/exceptions/data_not_found.dart';
 import 'package:community_app/app/model/user.dart';
 import 'package:community_app/app/repository/storage.dart';
 import 'package:community_app/app/repository/user.dart';
+import 'package:community_app/app/repository/utils.dart';
 import 'package:community_app/app/screens/auth/forgot_password.dart';
 import 'package:community_app/app/screens/features/dashboard.dart';
 import 'package:community_app/app/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mobile_number/mobile_number.dart';
 import 'package:path_provider/path_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -32,10 +34,24 @@ class _LoginScreenState extends State<LoginScreen> {
   bool showPassword = false;
   bool isLoginDisabled = false;
 
+  getMobileNumber() async {
+    bool isPermissionGranted = await MobileNumber.hasPhonePermission;
+    if (!isPermissionGranted) {
+      await MobileNumber.requestPhonePermission;
+      return;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    MobileNumber.listenPhonePermission((isPermissionGranted) {
+      if (isPermissionGranted) {
+        getMobileNumber();
+      }
+    });
     getApplicationDocumentsDirectory().then((value) => path = value.path);
+    getMobileNumber();
   }
 
   @override
@@ -202,42 +218,52 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => isLoginDisabled = true);
-
-    try {
-      final User user = await UserRepository.getUser(contact);
-      if (user.password == password) {
-        SharedPref.setLoggedUser(user);
-        SharedPref.setString(SharedPref.loggedInContact, user.contactNo!);
-        SharedPref.setLoggedIn();
-        for (var member in user.members!) {
-          if (member.profilePic != null) {
-            // Save Image in Local Storage
-            CloudStorage.fetchAndSaveToLocal(
-              "profile_pic/user_${user.contactNo}/${member.profilePic}",
-              "$path/${member.profilePic}",
+    final isConnected = await Utils.isInternetConnected();
+    if (isConnected) {
+      try {
+        final User user = await UserRepository.getUser(contact);
+        if (user.password == password) {
+          SharedPref.setLoggedUser(user);
+          SharedPref.setString(SharedPref.loggedInContact, user.contactNo!);
+          SharedPref.setLoggedIn();
+          for (var member in user.members!) {
+            if (member.profilePic != null) {
+              // Save Image in Local Storage
+              CloudStorage.fetchAndSaveToLocal(
+                "profile_pic/user_${user.contactNo}/${member.profilePic}",
+                "$path/${member.profilePic}",
+              );
+            }
+          }
+          if (context.mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const DashboardScreen(),
+              ),
+            );
+          }
+        } else {
+          // Invalid Password
+          if (context.mounted) {
+            showSnackbar("Invalid Password!!");
+            Timer(
+              const Duration(seconds: 2),
+              () => setState(() => isLoginDisabled = false),
             );
           }
         }
-        if (context.mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const DashboardScreen(),
-            ),
-          );
-        }
-      } else {
-        // Invalid Password
-        if (context.mounted) {
-          showSnackbar("Invalid Password!!");
-          Timer(
-            const Duration(seconds: 2),
-            () => setState(() => isLoginDisabled = false),
-          );
-        }
+      } on DataNotFound {
+        // Member not Found Exception
+        showSnackbar("You are not member!!");
+        Timer(
+          const Duration(seconds: 2),
+          () => setState(() => isLoginDisabled = false),
+        );
+      } on Exception {
+        debugPrint("Login Exception");
       }
-    } on DataNotFound {
-      // Member not Found Exception
-      showSnackbar("You are not member!!");
+    } else {
+      showSnackbar("Please Check Your Internet!!");
       Timer(
         const Duration(seconds: 2),
         () => setState(() => isLoginDisabled = false),

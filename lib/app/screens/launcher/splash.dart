@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:community_app/app/constants/images.dart';
+import 'package:community_app/app/repository/utils.dart';
 import 'package:community_app/app/screens/auth/login.dart';
 import 'package:community_app/app/screens/features/dashboard.dart';
 import 'package:community_app/app/screens/launcher/view_add_screen.dart';
@@ -16,6 +17,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   bool isLoggedIn = false;
+  bool isInternetConnected = true;
 
   void fetchLoggedStatus() async {
     var loggedStatus = await SharedPref.getLoggedIn();
@@ -29,16 +31,32 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     fetchLoggedStatus();
-    Timer(
-      const Duration(seconds: 5),
-      () => Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ViewAddScreen(
-              isLoggedIn ? const DashboardScreen() : const LoginScreen()),
+    checkConnectivity();
+  }
+
+  checkConnectivity() async {
+    if (!isInternetConnected) {
+      setState(() => isInternetConnected = true);
+    }
+    final isConnected = await Utils.isInternetConnected();
+    if (isConnected) {
+      Timer(
+        const Duration(seconds: 3),
+        () => Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ViewAddScreen(
+                isLoggedIn ? const DashboardScreen() : const LoginScreen()),
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      debugPrint('not connected');
+      Future.delayed(
+        const Duration(seconds: 2),
+        () => setState(() => isInternetConnected = false),
+      );
+    }
   }
 
   @override
@@ -54,12 +72,58 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     return Scaffold(
-      body: Center(
-        child: Image(
-          image: const AssetImage(roundedLogo),
-          width: width,
-          height: height,
-        ),
+      body: Column(
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Image(
+              image: const AssetImage(roundedLogo),
+              width: width,
+              height: height,
+            ),
+          ),
+          Center(
+            child: isInternetConnected
+                ? const CircularProgressIndicator(
+                    color: Colors.white,
+                  )
+                : Column(
+                    children: [
+                      const Text(
+                        "OOPS!",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const Text(
+                        "NO INTERNET",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const Text(
+                        "Please check your network connection.",
+                        style: TextStyle(
+                          fontWeight: FontWeight.normal,
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: ElevatedButton(
+                          onPressed: checkConnectivity,
+                          child: const Text("TRY AGAIN"),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ],
       ),
       backgroundColor: Colors.deepPurpleAccent,
     );

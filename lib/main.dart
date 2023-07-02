@@ -31,7 +31,9 @@ class MyApp extends StatelessWidget {
       ),
       home: FutureBuilder(
         future: _initialiation,
-        builder: (context, snapshot) => const SplashScreen(),
+        builder: (context, snapshot) {
+          return const SplashScreen();
+        },
       ),
       debugShowCheckedModeBanner: false,
     );
