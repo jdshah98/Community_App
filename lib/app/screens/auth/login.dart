@@ -246,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Invalid Password
           if (context.mounted) {
             showSnackbar("Invalid Password!!");
-            Timer(
+            Future.delayed(
               const Duration(seconds: 2),
               () => setState(() => isLoginDisabled = false),
             );
@@ -255,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
       } on DataNotFound {
         // Member not Found Exception
         showSnackbar("You are not member!!");
-        Timer(
+        Future.delayed(
           const Duration(seconds: 2),
           () => setState(() => isLoginDisabled = false),
         );
@@ -264,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } else {
       showSnackbar("Please Check Your Internet!!");
-      Timer(
+      Future.delayed(
         const Duration(seconds: 2),
         () => setState(() => isLoginDisabled = false),
       );

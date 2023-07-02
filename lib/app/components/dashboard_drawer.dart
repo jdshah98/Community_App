@@ -1,12 +1,11 @@
 import 'dart:io';
 
-import 'package:community_app/app/constants/integers.dart';
 import 'package:community_app/app/model/user.dart';
+import 'package:community_app/app/screens/auth/login.dart';
 import 'package:community_app/app/screens/features/address_book.dart';
 import 'package:community_app/app/screens/features/committee.dart';
 import 'package:community_app/app/screens/features/events.dart';
 import 'package:community_app/app/screens/features/jobs.dart';
-import 'package:community_app/app/screens/auth/login.dart';
 import 'package:community_app/app/screens/features/matrimony.dart';
 import 'package:community_app/app/screens/features/message_list.dart';
 import 'package:community_app/app/screens/features/profile/profile.dart';
@@ -23,6 +22,8 @@ class DashboardDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const double dashboardItemIconSize = 32;
+
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.8,
       child: ListView(

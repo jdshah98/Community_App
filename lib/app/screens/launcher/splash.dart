@@ -40,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     final isConnected = await Utils.isInternetConnected();
     if (isConnected) {
-      Timer(
+      Future.delayed(
         const Duration(seconds: 3),
         () => Navigator.pushReplacement(
           context,

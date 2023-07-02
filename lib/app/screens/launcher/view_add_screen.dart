@@ -20,8 +20,10 @@ class _ViewAddScreenState extends State<ViewAddScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3),
-        () => setState(() => _showCloseButton = true));
+    Future.delayed(
+      const Duration(seconds: 3),
+      () => setState(() => _showCloseButton = false),
+    );
   }
 
   @override

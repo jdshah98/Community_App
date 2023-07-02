@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:community_app/app/repository/user.dart';
+import 'package:community_app/app/repository/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_number/mobile_number.dart';
@@ -95,80 +98,48 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return null;
   }
 
+  showSnackbar(final String data, final Color? color) {
+    final SnackBar snackBar = SnackBar(
+      content: Text(data),
+      backgroundColor: color,
+      duration: const Duration(seconds: 2),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
   resetPassword() async {
+    if (_contactError != null ||
+        _passwordError != null ||
+        _confirmPasswordError != null) {
+      return;
+    }
+
     setState(() => isResetDisabled = true);
-
-    if (_contactError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_contactError!),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.red,
-        ),
-      );
-      Future.delayed(
-        const Duration(seconds: 2),
-        () => setState(() => isResetDisabled = false),
-      );
-      return;
-    }
-    if (_passwordError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_passwordError!),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.red,
-        ),
-      );
-      Future.delayed(
-        const Duration(seconds: 2),
-        () => setState(() => isResetDisabled = false),
-      );
-      return;
-    }
-
-    if (_confirmPasswordError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_confirmPasswordError!),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.red,
-        ),
-      );
-      Future.delayed(
-        const Duration(seconds: 2),
-        () => setState(() => isResetDisabled = false),
-      );
-      return;
-    }
 
     String contactNo = _contactController.value.text;
     String password = _passwordController.value.text;
 
     for (SimCard simcard in _simCardList) {
       if (simcard.number!.endsWith(contactNo)) {
-        await UserRepository.updatePassword(contactNo, password);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Your Password Changed!!"),
-              duration: Duration(seconds: 2),
-              backgroundColor: Colors.green,
-            ),
-          );
+        final isConnected = await Utils.isInternetConnected();
+        if (isConnected) {
+          await UserRepository.updatePassword(contactNo, password);
+          if (context.mounted) {
+            showSnackbar("Your Password Changes!!", Colors.green);
+            Future.delayed(
+              const Duration(seconds: 2),
+              () => Navigator.pop(context),
+            );
+          }
+        } else {
+          showSnackbar("Please Check Your Internet!!", Colors.red);
           Future.delayed(
             const Duration(seconds: 2),
-            () => Navigator.pop(context),
+            () => setState(() => isResetDisabled = false),
           );
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("You are not authorized to Change Password!!"),
-            duration: Duration(seconds: 2),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showSnackbar("You are not authorized to Change Password!!", Colors.red);
         Future.delayed(
           const Duration(seconds: 2),
           () => setState(() => isResetDisabled = false),
