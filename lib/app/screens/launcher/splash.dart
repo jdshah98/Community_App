@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:community_app/app/constants/images.dart';
+import 'package:community_app/app/repository/common.dart';
 import 'package:community_app/app/repository/utils.dart';
 import 'package:community_app/app/screens/auth/login.dart';
 import 'package:community_app/app/screens/features/dashboard.dart';
 import 'package:community_app/app/screens/launcher/view_add_screen.dart';
 import 'package:community_app/app/shared_pref.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -30,8 +32,10 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    fetchLoggedStatus();
-    checkConnectivity();
+    Future.delayed(const Duration(seconds: 1), () {
+      fetchLoggedStatus();
+      checkConnectivity();
+    });
   }
 
   checkConnectivity() async {

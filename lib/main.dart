@@ -32,7 +32,10 @@ class MyApp extends StatelessWidget {
       home: FutureBuilder(
         future: _initialiation,
         builder: (context, snapshot) {
-          return const SplashScreen();
+          if (snapshot.connectionState == ConnectionState.done) {
+            return const SplashScreen();
+          }
+          return const CircularProgressIndicator();
         },
       ),
       debugShowCheckedModeBanner: false,

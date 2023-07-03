@@ -22,7 +22,7 @@ class _ViewAddScreenState extends State<ViewAddScreen> {
     super.initState();
     Future.delayed(
       const Duration(seconds: 3),
-      () => setState(() => _showCloseButton = false),
+      () => setState(() => _showCloseButton = true),
     );
   }
 
@@ -40,19 +40,23 @@ class _ViewAddScreenState extends State<ViewAddScreen> {
     }
 
     return Scaffold(
-      body: Center(
-        child: Image(
-          image: NetworkImage(addBannerImageUrl),
-          width: width,
-          height: height,
-          fit: BoxFit.contain,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) {
-              return child;
-            }
-            return const Center(child: CircularProgressIndicator());
-          },
-        ),
+      body: Stack(
+        children: [
+          const Center(
+            child: Text(
+              "Loading...",
+              style: TextStyle(color: Colors.deepPurpleAccent, fontSize: 28),
+            ),
+          ),
+          Center(
+            child: Image(
+              image: NetworkImage(addBannerImageUrl),
+              width: width,
+              height: height,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ],
       ),
       floatingActionButton: Visibility(
         visible: _showCloseButton,

@@ -9,7 +9,6 @@ import 'package:community_app/app/screens/features/jobs.dart';
 import 'package:community_app/app/screens/features/matrimony.dart';
 import 'package:community_app/app/screens/features/message_list.dart';
 import 'package:community_app/app/screens/features/profile/profile.dart';
-import 'package:community_app/app/screens/features/trustee.dart';
 import 'package:community_app/app/shared_pref.dart';
 import 'package:flutter/material.dart';
 
@@ -230,34 +229,6 @@ class DashboardDrawer extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const MatrimonyScreen(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            title: const Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(right: 12),
-                  child: Icon(
-                    Icons.groups,
-                    color: Colors.deepPurpleAccent,
-                    size: dashboardItemIconSize,
-                  ),
-                ),
-                Text(
-                  'Trustee',
-                  style: TextStyle(color: Colors.deepPurpleAccent),
-                ),
-              ],
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const Trustee(),
                 ),
               );
             },
