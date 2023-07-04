@@ -4,22 +4,22 @@ import 'package:community_app/app/components/profile_bottom_sheet.dart';
 import 'package:community_app/app/constants/arrays.dart';
 import 'package:community_app/app/constants/images.dart';
 import 'package:community_app/app/model/user.dart';
+import 'package:community_app/app/repository/user.dart';
 import 'package:community_app/app/screens/features/profile/add_member.dart';
 import 'package:flutter/material.dart';
 
 class Profile extends StatefulWidget {
   const Profile(this.user, this.path, {super.key});
 
-  final User? user;
-  final String? path;
+  final User user;
+  final String path;
 
   @override
   State<Profile> createState() => _ProfileState();
 }
 
 class _ProfileState extends State<Profile> {
-  final TextEditingController _addressController =
-      TextEditingController(text: null);
+  final TextEditingController _addressController = TextEditingController();
   final TextEditingController _areaController = TextEditingController();
   final TextEditingController _nativePlaceController = TextEditingController();
   final TextEditingController _casteTypeController = TextEditingController();
@@ -27,10 +27,10 @@ class _ProfileState extends State<Profile> {
   @override
   void initState() {
     super.initState();
-    _addressController.text = widget.user!.address!;
-    _areaController.text = widget.user!.area!;
-    _nativePlaceController.text = widget.user!.nativePlace!;
-    _casteTypeController.text = widget.user!.casteType!;
+    _addressController.text = widget.user.address ?? "";
+    _areaController.text = widget.user.area ?? "";
+    _nativePlaceController.text = widget.user.nativePlace ?? "";
+    _casteTypeController.text = widget.user.casteType ?? "";
   }
 
   @override
@@ -56,7 +56,6 @@ class _ProfileState extends State<Profile> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: TextField(
                   keyboardType: TextInputType.streetAddress,
-                  controller: _addressController,
                   decoration: const InputDecoration(
                     prefixIcon: Icon(Icons.home),
                     border: OutlineInputBorder(),
@@ -66,6 +65,7 @@ class _ProfileState extends State<Profile> {
                   minLines: 1,
                   maxLines: 4,
                   onChanged: (value) => setState(() => {}),
+                  controller: _addressController,
                 ),
               ),
               Padding(
@@ -76,7 +76,6 @@ class _ProfileState extends State<Profile> {
                     child: DropdownMenu<String>(
                       width: MediaQuery.of(context).size.width - 32,
                       menuHeight: 300,
-                      controller: _areaController,
                       dropdownMenuEntries: areaList.map((e) {
                         return DropdownMenuEntry(value: e, label: e);
                       }).toList(),
@@ -84,7 +83,7 @@ class _ProfileState extends State<Profile> {
                       enableFilter: true,
                       enableSearch: true,
                       requestFocusOnTap: true,
-                      onSelected: (value) => {debugPrint(value)},
+                      controller: _areaController,
                     ),
                   ),
                 ),
@@ -93,12 +92,13 @@ class _ProfileState extends State<Profile> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: TextField(
                   keyboardType: TextInputType.name,
-                  controller: _nativePlaceController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     label: Text("Native Place"),
                     hintText: "Enter Native Place",
                   ),
+                  onChanged: (value) => setState(() => {}),
+                  controller: _nativePlaceController,
                 ),
               ),
               Padding(
@@ -108,12 +108,12 @@ class _ProfileState extends State<Profile> {
                     alignedDropdown: true,
                     child: DropdownMenu<String>(
                       width: MediaQuery.of(context).size.width - 32,
-                      controller: _casteTypeController,
                       dropdownMenuEntries: const [
                         DropdownMenuEntry(value: 'Dasa', label: 'Dasa'),
                         DropdownMenuEntry(value: 'Visa', label: 'Visa'),
                       ],
                       label: const Text("Select Dasa/Visa"),
+                      controller: _casteTypeController,
                     ),
                   ),
                 ),
@@ -130,7 +130,7 @@ class _ProfileState extends State<Profile> {
                       borderRadius: BorderRadius.all(Radius.circular(8)),
                     ),
                   ),
-                  onPressed: () => {},
+                  onPressed: updateUserProfile,
                   child: const Text("UPDATE", style: TextStyle(fontSize: 16)),
                 ),
               ),
@@ -179,9 +179,9 @@ class _ProfileState extends State<Profile> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => AddMember(
-                                            widget.user!.contactNo,
+                                            widget.user.contactNo,
                                             widget.path,
-                                            widget.user!.members!.length + 1),
+                                            widget.user.members.length + 1),
                                       ),
                                     ),
                                     icon: const Icon(Icons.add,
@@ -197,7 +197,7 @@ class _ProfileState extends State<Profile> {
                               ),
                             ),
                           ] +
-                          widget.user!.members!
+                          widget.user.members
                               .map(
                                 (member) => GestureDetector(
                                   onTap: () {
@@ -211,9 +211,10 @@ class _ProfileState extends State<Profile> {
                                         ),
                                       ),
                                       builder: (context) => ProfileBottomSheet(
-                                          widget.user!.contactNo!,
-                                          widget.path!,
-                                          member),
+                                        widget.user.contactNo!,
+                                        widget.path,
+                                        member,
+                                      ),
                                     );
                                   },
                                   child: Padding(
@@ -276,5 +277,31 @@ class _ProfileState extends State<Profile> {
         ),
       ),
     );
+  }
+
+  updateUserProfile() async {
+    final String address = _addressController.value.text;
+    final String area = _areaController.value.text;
+    final String nativePlace = _nativePlaceController.value.text;
+    final String casteType = _casteTypeController.value.text;
+
+    debugPrint(address);
+    debugPrint(area);
+    debugPrint(nativePlace);
+    debugPrint(casteType);
+
+    await UserRepository.updateUser(widget.user.contactNo!, {
+      'Address': address,
+      'Area': area,
+      'Native_Place': nativePlace,
+      'Caste_Type': casteType,
+    });
+
+    setState(() {
+      widget.user.address = address;
+      widget.user.area = area;
+      widget.user.nativePlace = nativePlace;
+      widget.user.casteType = casteType;
+    });
   }
 }

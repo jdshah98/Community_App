@@ -26,8 +26,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool isResetDisabled = false;
 
   getMobileNumber() async {
+    debugPrint("Hello3");
     bool isPermissionGranted = await MobileNumber.hasPhonePermission;
+    debugPrint("Granted Permission: $isPermissionGranted");
     if (!isPermissionGranted) {
+      debugPrint("Hello4");
       await MobileNumber.requestPhonePermission;
       return;
     }
@@ -45,11 +48,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint("Hello");
     MobileNumber.listenPhonePermission((isPermissionGranted) {
       if (isPermissionGranted) {
+        debugPrint("Hello2");
         getMobileNumber();
+      } else {
+        debugPrint("Permission Not Granted");
       }
     });
+    debugPrint("Hello1");
     getMobileNumber();
   }
 
@@ -114,6 +122,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
+    if (_simCardList.isEmpty) {
+      getMobileNumber();
+    }
+
     setState(() => isResetDisabled = true);
 
     String contactNo = _contactController.value.text;
@@ -123,7 +135,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (simcard.number!.endsWith(contactNo)) {
         final isConnected = await Utils.isInternetConnected();
         if (isConnected) {
-          await UserRepository.updatePassword(contactNo, password);
+          await UserRepository.updateUser(contactNo, {'Password': password});
           if (context.mounted) {
             showSnackbar("Your Password Changes!!", Colors.green);
             Future.delayed(

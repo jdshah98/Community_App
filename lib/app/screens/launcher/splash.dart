@@ -1,13 +1,11 @@
 import 'dart:async';
 
 import 'package:community_app/app/constants/images.dart';
-import 'package:community_app/app/repository/common.dart';
 import 'package:community_app/app/repository/utils.dart';
 import 'package:community_app/app/screens/auth/login.dart';
 import 'package:community_app/app/screens/features/dashboard.dart';
 import 'package:community_app/app/screens/launcher/view_add_screen.dart';
 import 'package:community_app/app/shared_pref.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -21,21 +19,15 @@ class _SplashScreenState extends State<SplashScreen> {
   bool isLoggedIn = false;
   bool isInternetConnected = true;
 
-  void fetchLoggedStatus() async {
-    var loggedStatus = await SharedPref.getLoggedIn();
-    debugPrint(loggedStatus.toString());
-    setState(() {
-      isLoggedIn = loggedStatus;
-    });
-  }
-
   @override
   void initState() {
-    super.initState();
-    Future.delayed(const Duration(seconds: 1), () {
-      fetchLoggedStatus();
+    Future.delayed(Duration.zero, () async {
+      var loggedStatus = await SharedPref.getLoggedIn();
+      debugPrint(loggedStatus.toString());
+      setState(() => isLoggedIn = loggedStatus);
       checkConnectivity();
     });
+    super.initState();
   }
 
   checkConnectivity() async {
@@ -45,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final isConnected = await Utils.isInternetConnected();
     if (isConnected) {
       Future.delayed(
-        const Duration(seconds: 3),
+        const Duration(seconds: 2),
         () => Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -55,7 +47,6 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       );
     } else {
-      debugPrint('not connected');
       Future.delayed(
         const Duration(seconds: 2),
         () => setState(() => isInternetConnected = false),

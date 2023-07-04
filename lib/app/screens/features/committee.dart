@@ -3,26 +3,8 @@ import 'package:community_app/app/model/committee_member.dart';
 import 'package:community_app/app/repository/common.dart';
 import 'package:flutter/material.dart';
 
-class Committee extends StatefulWidget {
+class Committee extends StatelessWidget {
   const Committee({super.key});
-
-  @override
-  State<Committee> createState() => _CommitteeState();
-}
-
-class _CommitteeState extends State<Committee> {
-  List<CommitteeMember> members = [];
-
-  fetchMembers() async {
-    members = await CommonRepository.getAllCommitteeMembers();
-    setState(() {});
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchMembers();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +17,15 @@ class _CommitteeState extends State<Committee> {
         backgroundColor: Colors.deepPurpleAccent,
         foregroundColor: Colors.white,
       ),
-      body: members.isNotEmpty
-          ? SingleChildScrollView(
+      body: FutureBuilder(
+        future: CommonRepository.getAllCommitteeMembers(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            debugPrint(snapshot.data.toString());
+            List<CommitteeMember>? members = snapshot.data;
+            return SingleChildScrollView(
               child: Column(
-                children: members
+                children: members!
                     .map(
                       (member) => Card(
                         elevation: 5,
@@ -71,8 +58,11 @@ class _CommitteeState extends State<Committee> {
                     )
                     .toList(),
               ),
-            )
-          : const Center(child: CircularProgressIndicator()),
+            );
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
+      ),
     );
   }
 }

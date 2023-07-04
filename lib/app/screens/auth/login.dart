@@ -48,6 +48,8 @@ class _LoginScreenState extends State<LoginScreen> {
     MobileNumber.listenPhonePermission((isPermissionGranted) {
       if (isPermissionGranted) {
         getMobileNumber();
+      } else {
+        debugPrint("Permission Not Granted");
       }
     });
     getApplicationDocumentsDirectory().then((value) => path = value.path);

@@ -12,26 +12,22 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  bool isLoading = true;
-  late User user;
-  late String path;
-  late String imagePath;
-
-  void fetchData() async {
-    path = (await getApplicationDocumentsDirectory()).path;
-    user = User.fromMap(
-        (await SharedPref.getLoggedUser()) as Map<String, dynamic>);
-    imagePath = "$path/${user.members![0].profilePic}";
-    debugPrint(imagePath);
-    setState(() {
-      isLoading = false;
-    });
-  }
+  bool isLoaded = false;
+  User user = User.empty();
+  String path = "";
+  String imagePath = "";
 
   @override
   void initState() {
     super.initState();
-    fetchData();
+    Future.delayed(Duration.zero, () async {
+      path = (await getApplicationDocumentsDirectory()).path;
+      user = User.fromMap(
+          (await SharedPref.getLoggedUser()) as Map<String, dynamic>);
+      imagePath = "$path/${user.members[0].profilePic}";
+
+      setState(() => isLoaded = true);
+    });
   }
 
   @override
@@ -42,14 +38,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: Colors.deepPurpleAccent,
         foregroundColor: Colors.white,
       ),
-      body: !isLoading
+      body: isLoaded
           ? const Center(
               child: Text("Welcome"),
             )
           : const CircularProgressIndicator(),
-      drawer: !isLoading
-          ? DashboardDrawer(user, path)
-          : const DashboardDrawer.nullDrawer(),
+      drawer: DashboardDrawer(user, path, isLoaded),
     );
   }
 }

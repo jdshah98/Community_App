@@ -1,16 +1,26 @@
 import 'package:community_app/app/model/member.dart';
 
 class User {
-  String? contactNo;
-  String? password;
-  bool? isAdmin;
-  String? address;
-  String? area;
-  String? nativePlace;
-  String? casteType;
-  List<Member>? members;
+  String contactNo;
+  String password;
+  bool isAdmin;
+  String address;
+  String area;
+  String nativePlace;
+  String casteType;
+  List<Member> members;
 
-  User({
+  User.empty()
+      : contactNo = "",
+        password = "",
+        isAdmin = false,
+        address = "",
+        area = "",
+        nativePlace = "",
+        casteType = "",
+        members = List.empty();
+
+  User(
     this.contactNo,
     this.password,
     this.isAdmin,
@@ -19,7 +29,7 @@ class User {
     this.nativePlace,
     this.casteType,
     this.members,
-  });
+  );
 
   Map<String, dynamic> toMap() {
     return {
@@ -30,7 +40,7 @@ class User {
       'Area': area,
       'Native_Place': nativePlace,
       'Caste_Type': casteType,
-      'Members': members!.map((member) => member.toMap()).toList(),
+      'Members': members.map((member) => member.toMap()).toList(),
     };
   }
 
