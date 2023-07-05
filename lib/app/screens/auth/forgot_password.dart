@@ -5,6 +5,7 @@ import 'package:community_app/app/repository/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_number/mobile_number.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -13,7 +14,8 @@ class ForgotPasswordScreen extends StatefulWidget {
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
+    with WidgetsBindingObserver {
   final TextEditingController _contactController =
       TextEditingController(text: null);
   final TextEditingController _passwordController =
@@ -24,14 +26,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   List<SimCard> _simCardList = <SimCard>[];
   bool showPassword = false;
   bool isResetDisabled = false;
+  bool isContactChanged = false;
+  bool isPasswordChanged = false;
+  bool isDialogVisible = false;
 
   getMobileNumber() async {
-    debugPrint("Hello3");
     bool isPermissionGranted = await MobileNumber.hasPhonePermission;
-    debugPrint("Granted Permission: $isPermissionGranted");
     if (!isPermissionGranted) {
-      debugPrint("Hello4");
-      await MobileNumber.requestPhonePermission;
+      checkPermission();
       return;
     }
     try {
@@ -45,24 +47,68 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() {});
   }
 
+  checkPermission() {
+    Permission.phone.request().then(
+      (status) {
+        if (status.isPermanentlyDenied) {
+          setState(() => isDialogVisible = true);
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text("Alert"),
+                content: const Text(
+                    "Phone Permission is Required!! Open App Settings"),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Cancel")),
+                  TextButton(
+                    onPressed: () {
+                      openAppSettings().then((value) {
+                        Navigator.pop(context);
+                        setState(() => isDialogVisible = false);
+                      });
+                    },
+                    child: const Text("Continue"),
+                  ),
+                ],
+              );
+            },
+          );
+        } else if (status.isGranted) {
+          setState(() => isDialogVisible = false);
+          getMobileNumber();
+        }
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    debugPrint("Hello");
-    MobileNumber.listenPhonePermission((isPermissionGranted) {
-      if (isPermissionGranted) {
-        debugPrint("Hello2");
-        getMobileNumber();
-      } else {
-        debugPrint("Permission Not Granted");
-      }
-    });
-    debugPrint("Hello1");
+    WidgetsBinding.instance.addObserver(this);
     getMobileNumber();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    debugPrint("Hello: $state");
+    if (state == AppLifecycleState.resumed) {
+      if (!isDialogVisible) {
+        checkPermission();
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _contactController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -70,6 +116,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   String? get _contactError {
+    if (!isContactChanged) {
+      return null;
+    }
+
     final text = _contactController.value.text;
 
     if (text.isEmpty) {
@@ -83,6 +133,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   String? get _passwordError {
+    if (!isPasswordChanged) {
+      return null;
+    }
+
     final text = _passwordController.value.text;
 
     if (text.isEmpty) {
@@ -116,17 +170,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   resetPassword() async {
-    if (_contactError != null ||
+    if (!isContactChanged ||
+        !isPasswordChanged ||
+        _contactError != null ||
         _passwordError != null ||
         _confirmPasswordError != null) {
       return;
     }
 
-    if (_simCardList.isEmpty) {
-      getMobileNumber();
-    }
-
     setState(() => isResetDisabled = true);
+
+    if (_simCardList.isEmpty) {
+      showSnackbar(
+          "No Sim Detected!! You're not authorized to change password!!",
+          Colors.red);
+      Future.delayed(
+        const Duration(seconds: 2),
+        () => setState(() => isResetDisabled = false),
+      );
+      return;
+    }
 
     String contactNo = _contactController.value.text;
     String password = _passwordController.value.text;
@@ -151,7 +214,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           );
         }
       } else {
-        showSnackbar("You are not authorized to Change Password!!", Colors.red);
+        showSnackbar(
+            "You're not authorized to Change Password!! Contact no with Sim Card not Found",
+            Colors.red);
         Future.delayed(
           const Duration(seconds: 2),
           () => setState(() => isResetDisabled = false),
@@ -185,7 +250,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   hintText: 'Enter Contact No',
                   errorText: _contactError,
                 ),
-                onChanged: (value) => setState(() => {}),
+                onChanged: (value) => setState(() => isContactChanged = true),
               ),
             ),
             Padding(
@@ -212,7 +277,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   hintText: 'Enter Password',
                   errorText: _passwordError,
                 ),
-                onChanged: (value) => setState(() => {}),
+                onChanged: (value) => setState(() => isPasswordChanged = true),
               ),
             ),
             Padding(

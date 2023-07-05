@@ -11,7 +11,6 @@ import 'package:community_app/app/screens/features/dashboard.dart';
 import 'package:community_app/app/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mobile_number/mobile_number.dart';
 import 'package:path_provider/path_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -34,26 +33,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool showPassword = false;
   bool isLoginDisabled = false;
 
-  getMobileNumber() async {
-    bool isPermissionGranted = await MobileNumber.hasPhonePermission;
-    if (!isPermissionGranted) {
-      await MobileNumber.requestPhonePermission;
-      return;
-    }
-  }
-
   @override
   void initState() {
-    super.initState();
-    MobileNumber.listenPhonePermission((isPermissionGranted) {
-      if (isPermissionGranted) {
-        getMobileNumber();
-      } else {
-        debugPrint("Permission Not Granted");
-      }
-    });
     getApplicationDocumentsDirectory().then((value) => path = value.path);
-    getMobileNumber();
+    super.initState();
   }
 
   @override
@@ -263,6 +246,11 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } on Exception {
         debugPrint("Login Exception");
+        showSnackbar("Server Error!!");
+        Future.delayed(
+          const Duration(seconds: 2),
+          () => setState(() => isLoginDisabled = false),
+        );
       }
     } else {
       showSnackbar("Please Check Your Internet!!");
