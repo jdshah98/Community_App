@@ -27,10 +27,10 @@ class _ProfileState extends State<Profile> {
   @override
   void initState() {
     super.initState();
-    _addressController.text = widget.user.address ?? "";
-    _areaController.text = widget.user.area ?? "";
-    _nativePlaceController.text = widget.user.nativePlace ?? "";
-    _casteTypeController.text = widget.user.casteType ?? "";
+    _addressController.text = widget.user.address;
+    _areaController.text = widget.user.area;
+    _nativePlaceController.text = widget.user.nativePlace;
+    _casteTypeController.text = widget.user.casteType;
   }
 
   @override
@@ -45,96 +45,97 @@ class _ProfileState extends State<Profile> {
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        child: GestureDetector(
-          onTap: () {
-            FocusScope.of(context).unfocus();
-          },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: TextField(
-                  keyboardType: TextInputType.streetAddress,
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.home),
-                    border: OutlineInputBorder(),
-                    label: Text('Residential Address'),
-                    hintText: 'Enter Address',
-                  ),
-                  minLines: 1,
-                  maxLines: 4,
-                  onChanged: (value) => setState(() => {}),
-                  controller: _addressController,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: TextField(
+                keyboardType: TextInputType.streetAddress,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.home),
+                  border: OutlineInputBorder(),
+                  label: Text('Residential Address'),
+                  hintText: 'Enter Address',
                 ),
+                minLines: 1,
+                maxLines: 4,
+                onChanged: (value) => setState(() => {}),
+                controller: _addressController,
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: DropdownButtonHideUnderline(
-                  child: ButtonTheme(
-                    alignedDropdown: true,
-                    child: DropdownMenu<String>(
-                      width: MediaQuery.of(context).size.width - 32,
-                      menuHeight: 300,
-                      dropdownMenuEntries: areaList.map((e) {
-                        return DropdownMenuEntry(value: e, label: e);
-                      }).toList(),
-                      label: const Text("Select Area"),
-                      enableFilter: true,
-                      enableSearch: true,
-                      requestFocusOnTap: true,
-                      controller: _areaController,
-                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: DropdownButtonHideUnderline(
+                child: ButtonTheme(
+                  alignedDropdown: true,
+                  child: DropdownMenu<String>(
+                    width: MediaQuery.of(context).size.width - 32,
+                    menuHeight: 300,
+                    dropdownMenuEntries: areaList.map((e) {
+                      return DropdownMenuEntry(value: e, label: e);
+                    }).toList(),
+                    label: const Text("Select Area"),
+                    errorText: _areaError,
+                    enableFilter: true,
+                    enableSearch: true,
+                    requestFocusOnTap: true,
+                    controller: _areaController,
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: TextField(
-                  keyboardType: TextInputType.name,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    label: Text("Native Place"),
-                    hintText: "Enter Native Place",
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: TextField(
+                keyboardType: TextInputType.name,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  label: Text("Native Place"),
+                  hintText: "Enter Native Place",
+                ),
+                onChanged: (value) => setState(() => {}),
+                controller: _nativePlaceController,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: DropdownButtonHideUnderline(
+                child: ButtonTheme(
+                  alignedDropdown: true,
+                  child: DropdownMenu<String>(
+                    width: MediaQuery.of(context).size.width - 32,
+                    dropdownMenuEntries: const [
+                      DropdownMenuEntry(value: 'Dasa', label: 'Dasa'),
+                      DropdownMenuEntry(value: 'Visa', label: 'Visa'),
+                    ],
+                    label: const Text("Select Dasa/Visa"),
+                    controller: _casteTypeController,
                   ),
-                  onChanged: (value) => setState(() => {}),
-                  controller: _nativePlaceController,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: DropdownButtonHideUnderline(
-                  child: ButtonTheme(
-                    alignedDropdown: true,
-                    child: DropdownMenu<String>(
-                      width: MediaQuery.of(context).size.width - 32,
-                      dropdownMenuEntries: const [
-                        DropdownMenuEntry(value: 'Dasa', label: 'Dasa'),
-                        DropdownMenuEntry(value: 'Visa', label: 'Visa'),
-                      ],
-                      label: const Text("Select Dasa/Visa"),
-                      controller: _casteTypeController,
-                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  elevation: 5,
+                  backgroundColor: Colors.deepPurpleAccent,
+                  foregroundColor: Colors.white,
+                  fixedSize: Size(MediaQuery.of(context).size.width - 32, 48),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
                   ),
                 ),
+                onPressed: updateUserProfile,
+                child: const Text("UPDATE", style: TextStyle(fontSize: 16)),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    backgroundColor: Colors.deepPurpleAccent,
-                    foregroundColor: Colors.white,
-                    fixedSize: Size(MediaQuery.of(context).size.width - 32, 48),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8)),
-                    ),
-                  ),
-                  onPressed: updateUserProfile,
-                  child: const Text("UPDATE", style: TextStyle(fontSize: 16)),
-                ),
-              ),
-              Padding(
+            ),
+            InkWell(
+              onTap: () {
+                FocusScope.of(context).unfocus();
+              },
+              child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Card(
                   surfaceTintColor: Colors.white,
@@ -272,11 +273,25 @@ class _ProfileState extends State<Profile> {
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  String? get _areaError {
+    final area = _areaController.value.text;
+
+    if (area.isEmpty) {
+      return "Area is Required!!";
+    }
+
+    if (!areaList.contains(area)) {
+      return "Please Select Valid Area!!";
+    }
+
+    return null;
   }
 
   updateUserProfile() async {
@@ -285,12 +300,40 @@ class _ProfileState extends State<Profile> {
     final String nativePlace = _nativePlaceController.value.text;
     final String casteType = _casteTypeController.value.text;
 
+    if (_areaError != null) {
+      return;
+    }
+
     debugPrint(address);
     debugPrint(area);
     debugPrint(nativePlace);
     debugPrint(casteType);
 
-    await UserRepository.updateUser(widget.user.contactNo!, {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const Dialog(
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // The loading indicator
+                CircularProgressIndicator(),
+                SizedBox(
+                  height: 15,
+                ),
+                // Some text
+                Text('Updating...')
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    await UserRepository.updateUser(widget.user.contactNo, {
       'Address': address,
       'Area': area,
       'Native_Place': nativePlace,
@@ -303,5 +346,17 @@ class _ProfileState extends State<Profile> {
       widget.user.nativePlace = nativePlace;
       widget.user.casteType = casteType;
     });
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(context).pop();
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      backgroundColor: Colors.green,
+      content: Text("Updated Successfully"),
+      duration: Duration(seconds: 1),
+    ));
   }
 }
