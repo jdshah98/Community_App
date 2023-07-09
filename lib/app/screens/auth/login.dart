@@ -26,6 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController =
       TextEditingController(text: null);
 
+  final FocusNode _contactNode = FocusNode();
+  final FocusNode _passwordNode = FocusNode();
+
   late String path;
 
   bool isContactChanged = false;
@@ -67,6 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 controller: _contactController,
+                focusNode: _contactNode,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.phone),
                   border: const OutlineInputBorder(),
@@ -83,6 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.visiblePassword,
                 obscureText: !showPassword,
                 controller: _passwordController,
+                focusNode: _passwordNode,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.password),
                   suffixIcon: IconButton(
@@ -195,10 +200,13 @@ class _LoginScreenState extends State<LoginScreen> {
     final String contact = _contactController.value.text;
     final String password = _passwordController.value.text;
 
-    if (!isContactChanged ||
-        !isPasswordChanged ||
-        _contactError != null ||
-        _passwordError != null) {
+    if (!isContactChanged || _contactError != null) {
+      FocusScope.of(context).requestFocus(_contactNode);
+      return;
+    }
+
+    if (!isPasswordChanged || _passwordError != null) {
+      FocusScope.of(context).requestFocus(_passwordNode);
       return;
     }
 
@@ -233,7 +241,10 @@ class _LoginScreenState extends State<LoginScreen> {
             showSnackbar("Invalid Password!!");
             Future.delayed(
               const Duration(seconds: 2),
-              () => setState(() => isLoginDisabled = false),
+              () {
+                setState(() => isLoginDisabled = false);
+                FocusScope.of(context).requestFocus(_passwordNode);
+              },
             );
           }
         }

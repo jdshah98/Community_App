@@ -67,6 +67,7 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.deepPurpleAccent,
       body: Column(
         children: [
           SizedBox(
@@ -120,7 +121,6 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
         ],
       ),
-      backgroundColor: Colors.deepPurpleAccent,
     );
   }
 }

@@ -23,6 +23,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   final TextEditingController _confirmPasswordController =
       TextEditingController(text: null);
 
+  final FocusNode _contactNode = FocusNode();
+  final FocusNode _passwordNode = FocusNode();
+  final FocusNode _confirmPasswordNode = FocusNode();
+
   List<SimCard> _simCardList = <SimCard>[];
   bool showPassword = false;
   bool isResetDisabled = false;
@@ -170,11 +174,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   }
 
   resetPassword() async {
-    if (!isContactChanged ||
-        !isPasswordChanged ||
-        _contactError != null ||
-        _passwordError != null ||
-        _confirmPasswordError != null) {
+    if (!isContactChanged || _contactError != null) {
+      FocusScope.of(context).requestFocus(_contactNode);
+      return;
+    }
+
+    if (!isPasswordChanged || _passwordError != null) {
+      FocusScope.of(context).requestFocus(_passwordNode);
+      return;
+    }
+
+    if (_confirmPasswordError != null) {
+      FocusScope.of(context).requestFocus(_confirmPasswordNode);
       return;
     }
 
@@ -200,7 +211,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         if (isConnected) {
           await UserRepository.updateUser(contactNo, {'Password': password});
           if (context.mounted) {
-            showSnackbar("Your Password Changes!!", Colors.green);
+            showSnackbar("Your Password Changed!!", Colors.green);
             Future.delayed(
               const Duration(seconds: 2),
               () => Navigator.pop(context),
@@ -219,7 +230,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             Colors.red);
         Future.delayed(
           const Duration(seconds: 2),
-          () => setState(() => isResetDisabled = false),
+          () {
+            setState(() => isResetDisabled = false);
+            FocusScope.of(context).requestFocus(_contactNode);
+          },
         );
       }
     }
@@ -243,6 +257,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 controller: _contactController,
+                focusNode: _contactNode,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.phone),
                   border: const OutlineInputBorder(),
@@ -259,6 +274,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 keyboardType: TextInputType.visiblePassword,
                 obscureText: !showPassword,
                 controller: _passwordController,
+                focusNode: _passwordNode,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.password),
                   suffixIcon: IconButton(
@@ -285,6 +301,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               child: TextField(
                 keyboardType: TextInputType.visiblePassword,
                 controller: _confirmPasswordController,
+                focusNode: _confirmPasswordNode,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.password),
                   border: const OutlineInputBorder(),

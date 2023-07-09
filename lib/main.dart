@@ -35,8 +35,11 @@ class MyApp extends StatelessWidget {
             return const SplashScreen();
           }
           return const Scaffold(
+            backgroundColor: Colors.deepPurpleAccent,
             body: Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(
+                color: Colors.white,
+              ),
             ),
           );
         },
