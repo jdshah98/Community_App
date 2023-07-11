@@ -1,7 +1,9 @@
+import 'package:community_app/app/consumer/app_state.dart';
 import 'package:community_app/app/screens/launcher/splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import 'app/firebase_options.dart';
 
@@ -18,33 +20,36 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Saurashtra Jain Yuvak Mandal App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurpleAccent,
+    return ChangeNotifierProvider(
+      create: (context) => AppState(),
+      child: MaterialApp(
+        title: 'Saurashtra Jain Yuvak Mandal App',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.deepPurpleAccent,
+          ),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
-      ),
-      home: FutureBuilder(
-        future: Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        ),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return const SplashScreen();
-          }
-          return const Scaffold(
-            backgroundColor: Colors.deepPurpleAccent,
-            body: Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
+        home: FutureBuilder(
+          future: Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          ),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return const SplashScreen();
+            }
+            return const Scaffold(
+              backgroundColor: Colors.deepPurpleAccent,
+              body: Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
+        debugShowCheckedModeBanner: false,
       ),
-      debugShowCheckedModeBanner: false,
     );
   }
 }

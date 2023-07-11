@@ -1,14 +1,11 @@
-import 'package:community_app/app/model/member.dart';
 import 'package:community_app/app/screens/features/profile/edit_member.dart';
 import 'package:community_app/app/screens/features/profile/view_member.dart';
 import 'package:flutter/material.dart';
 
 class ProfileBottomSheet extends StatelessWidget {
-  const ProfileBottomSheet(this.contactNo, this.path, this.member, {super.key});
+  const ProfileBottomSheet(this.memberId, {super.key});
 
-  final String contactNo;
-  final String path;
-  final Member member;
+  final int memberId;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +29,7 @@ class ProfileBottomSheet extends StatelessWidget {
             onTap: () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => ViewMember(path, member),
+                builder: (context) => ViewMember(memberId),
               ),
             ),
             child: const Padding(
@@ -64,7 +61,7 @@ class ProfileBottomSheet extends StatelessWidget {
             onTap: () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => EditMember(contactNo, path, member),
+                builder: (context) => EditMember(memberId),
               ),
             ),
             child: const Padding(

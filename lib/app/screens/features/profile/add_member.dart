@@ -1,21 +1,22 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:community_app/app/constants/arrays.dart';
 import 'package:community_app/app/constants/images.dart';
+import 'package:community_app/app/consumer/app_state.dart';
 import 'package:community_app/app/model/member.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:community_app/app/repository/storage.dart';
+import 'package:community_app/app/repository/user.dart';
+import 'package:community_app/app/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' show extension;
+import 'package:provider/provider.dart';
 
 class AddMember extends StatefulWidget {
-  const AddMember(this.contactNo, this.path, this.memberId, {super.key});
+  const AddMember(this.memberId, {super.key});
 
-  final String? contactNo;
-  final String? path;
   final int memberId;
 
   @override
@@ -23,15 +24,14 @@ class AddMember extends StatefulWidget {
 }
 
 class _AddMemberState extends State<AddMember> {
-  final CollectionReference usersRef =
-      FirebaseFirestore.instance.collection("users");
-  final Reference storageRef = FirebaseStorage.instance.ref("profile_pic");
-  final ImagePicker _picker = ImagePicker();
-  final DateFormat dateformatter = DateFormat("dd-MM-yyyy");
-
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _relationController = TextEditingController();
+  final TextEditingController _genderController = TextEditingController();
+  final TextEditingController _bloodGroupController = TextEditingController();
+  final TextEditingController _maritalStatusController =
+      TextEditingController();
   final TextEditingController _educationController = TextEditingController();
   final TextEditingController _occupationController = TextEditingController();
   final TextEditingController _officeContactController =
@@ -39,11 +39,20 @@ class _AddMemberState extends State<AddMember> {
   final TextEditingController _officeAddressController =
       TextEditingController();
 
+  final ImagePicker _picker = ImagePicker();
+  final DateFormat dateformatter = DateFormat("dd-MM-yyyy");
+
+  FileImage? profileImage;
+
+  late String localPath;
+  late String contactNo;
   late Member member;
 
-  void _openImagePicker(ImageSource source) async {
+  Future<String?> _openImagePicker(ImageSource source) async {
     final XFile? pickedImage = await _picker.pickImage(
-        source: source, preferredCameraDevice: CameraDevice.front);
+      source: source,
+      preferredCameraDevice: CameraDevice.front,
+    );
     if (pickedImage != null) {
       CroppedFile? croppedFile = await ImageCropper().cropImage(
         sourcePath: pickedImage.path,
@@ -66,28 +75,28 @@ class _AddMemberState extends State<AddMember> {
       );
       if (croppedFile != null) {
         final String imageName =
-            "member_${widget.memberId}${extension(croppedFile.path)}";
-        final imageRef =
-            storageRef.child("user_${widget.contactNo}/$imageName");
+            "member_${member.memberId}${extension(croppedFile.path)}";
+
         File inputFile = File(croppedFile.path);
-        await imageRef.putFile(inputFile);
-        // final downloadUrl = await imageRef.getDownloadURL();
-        // debugPrint("Url: $downloadUrl");
-        inputFile.copy("${widget.path}/$imageName");
+        await Directory("$localPath/temp").create();
+        await inputFile.copy("$localPath/temp/$imageName");
 
         setState(() {
           member.profilePic = imageName;
         });
+        return "temp/$imageName";
       } else {
         debugPrint("Cancelled Crop");
+        return null;
       }
     } else {
       debugPrint("Cancelled Image");
+      return null;
     }
   }
 
-  void _showModalBottomSheet(BuildContext context) {
-    showModalBottomSheet(
+  Future<String?> _showModalBottomSheet(BuildContext context) {
+    return showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(),
       builder: (context) {
@@ -96,35 +105,26 @@ class _AddMemberState extends State<AddMember> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Profile photo",
-                      style: TextStyle(
-                          fontSize: 18, color: Colors.deepPurpleAccent),
-                    ),
-                    InkWell(
-                      onTap: () {},
-                      splashColor: Colors.grey.shade200,
-                      child: const Icon(
-                        Icons.delete,
-                        color: Colors.deepPurpleAccent,
-                      ),
-                    ),
-                  ],
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                child: Text(
+                  "Profile photo",
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.deepPurpleAccent,
+                  ),
                 ),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   InkWell(
-                    onTap: () {
-                      _openImagePicker(ImageSource.camera);
-                      Navigator.pop(context);
+                    onTap: () async {
+                      String? imageName =
+                          await _openImagePicker(ImageSource.camera);
+                      if (mounted) {
+                        Navigator.pop(context, imageName);
+                      }
                     },
                     splashColor: Colors.grey.shade200,
                     child: Column(
@@ -155,9 +155,12 @@ class _AddMemberState extends State<AddMember> {
                     ),
                   ),
                   InkWell(
-                    onTap: () {
-                      _openImagePicker(ImageSource.gallery);
-                      Navigator.pop(context);
+                    onTap: () async {
+                      String? imageName =
+                          await _openImagePicker(ImageSource.gallery);
+                      if (mounted) {
+                        Navigator.pop(context, imageName);
+                      }
                     },
                     splashColor: Colors.grey.shade200,
                     child: Column(
@@ -199,233 +202,346 @@ class _AddMemberState extends State<AddMember> {
   @override
   void initState() {
     super.initState();
-    member = Member(memberId: widget.memberId);
+    localPath = Provider.of<AppState>(context, listen: false).localPath;
+    contactNo = Provider.of<AppState>(context, listen: false).user.contactNo;
+    member = Member.empty(widget.memberId);
     _dateController.text = dateformatter.format(DateTime.now());
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "New Member",
-          style: TextStyle(letterSpacing: 0.1),
-        ),
-        backgroundColor: Colors.deepPurpleAccent,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Container(
-              height: 170,
-              alignment: Alignment.center,
-              child: Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: member.profilePic != null
-                          ? DecorationImage(
-                              fit: BoxFit.cover,
-                              image: FileImage(
-                                  File("${widget.path}/${member.profilePic}")),
-                            )
-                          : const DecorationImage(
-                              fit: BoxFit.cover,
-                              image: AssetImage(avatar),
-                            ),
+    return Consumer<AppState>(
+      builder: (context, state, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              "New Member",
+              style: TextStyle(letterSpacing: 0.1),
+            ),
+            backgroundColor: Colors.deepPurpleAccent,
+            foregroundColor: Colors.white,
+          ),
+          body: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                  height: 170,
+                  alignment: Alignment.center,
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: profileImage != null
+                              ? DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: profileImage!,
+                                )
+                              : const DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: AssetImage(avatar),
+                                ),
+                        ),
+                      ),
+                      FloatingActionButton.small(
+                        shape: const CircleBorder(),
+                        onPressed: () {
+                          _showModalBottomSheet(context).then((value) {
+                            if (value != null) {
+                              if (profileImage != null) {
+                                profileImage!.evict().then((success) {
+                                  setState(() {
+                                    profileImage =
+                                        FileImage(File("$localPath/$value"));
+                                  });
+                                });
+                              } else {
+                                setState(() {
+                                  profileImage =
+                                      FileImage(File("$localPath/$value"));
+                                });
+                              }
+                            }
+                          });
+                        },
+                        child: const Icon(Icons.camera_alt),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: TextField(
+                    keyboardType: TextInputType.name,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Name'),
+                      hintText: 'Enter Name',
                     ),
+                    onChanged: (value) => member.name = value,
+                    controller: _nameController,
                   ),
-                  FloatingActionButton.small(
-                    shape: const CircleBorder(),
-                    onPressed: () => _showModalBottomSheet(context),
-                    child: const Icon(Icons.camera_alt),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: TextField(
-                keyboardType: TextInputType.name,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Name'),
-                  hintText: 'Enter Name',
                 ),
-                onChanged: (value) => member.name = value,
-                controller: _nameController,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Mobile'),
-                  hintText: 'Enter Mobile',
-                ),
-                onChanged: (value) => member.mobileNo = value,
-                controller: _mobileController,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                onTap: () {
-                  showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime.now(),
-                  ).then(
-                    (value) =>
-                        _dateController.text = dateformatter.format(value!),
-                  );
-                },
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text("D.O.B."),
-                ),
-                controller: _dateController,
-                readOnly: true,
-                keyboardType: TextInputType.none,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: SizedBox(
-                child: DropdownButtonHideUnderline(
-                  child: ButtonTheme(
-                    alignedDropdown: true,
-                    child: DropdownMenu<String>(
-                      width: MediaQuery.of(context).size.width - 32,
-                      menuHeight: 300,
-                      dropdownMenuEntries: relationList.map((e) {
-                        return DropdownMenuEntry(value: e, label: e);
-                      }).toList(),
-                      label: const Text("Select Relation"),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Mobile'),
+                      hintText: 'Enter Mobile',
                     ),
+                    onChanged: (value) => member.mobileNo = value,
+                    controller: _mobileController,
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: SizedBox(
-                child: DropdownButtonHideUnderline(
-                  child: ButtonTheme(
-                    alignedDropdown: true,
-                    child: DropdownMenu<String>(
-                      width: MediaQuery.of(context).size.width - 32,
-                      dropdownMenuEntries: const [
-                        DropdownMenuEntry(value: 'MALE', label: 'MALE'),
-                        DropdownMenuEntry(value: 'FEMALE', label: 'FEMALE'),
-                      ],
-                      label: const Text("Select Gender"),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    onTap: () => showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                    ).then((value) {
+                      if (value != null) {
+                        _dateController.text = dateformatter.format(value);
+                      }
+                    }),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text("D.O.B."),
                     ),
+                    controller: _dateController,
+                    readOnly: true,
+                    keyboardType: TextInputType.none,
+                    onChanged: (value) => member.dob = value,
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: SizedBox(
-                child: DropdownButtonHideUnderline(
-                  child: ButtonTheme(
-                    alignedDropdown: true,
-                    child: DropdownMenu<String>(
-                      width: MediaQuery.of(context).size.width - 32,
-                      menuHeight: 300,
-                      dropdownMenuEntries: bloodGroupList.map((e) {
-                        return DropdownMenuEntry(value: e, label: e);
-                      }).toList(),
-                      label: const Text("Select Blood Group"),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: DropdownButtonHideUnderline(
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownMenu<String>(
+                        width: MediaQuery.of(context).size.width - 32,
+                        menuHeight: 300,
+                        dropdownMenuEntries: relationList.map((e) {
+                          return DropdownMenuEntry(value: e, label: e);
+                        }).toList(),
+                        label: const Text("Select Relation"),
+                        controller: _relationController,
+                        onSelected: (value) => member.relation = value ?? "",
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: SizedBox(
-                child: DropdownButtonHideUnderline(
-                  child: ButtonTheme(
-                    alignedDropdown: true,
-                    child: DropdownMenu<String>(
-                      width: MediaQuery.of(context).size.width - 32,
-                      dropdownMenuEntries: const [
-                        DropdownMenuEntry(
-                            value: 'Unmarried', label: 'Unmarried'),
-                        DropdownMenuEntry(value: 'Married', label: 'Married'),
-                      ],
-                      label: const Text("Select Marital Status"),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: DropdownButtonHideUnderline(
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownMenu<String>(
+                        width: MediaQuery.of(context).size.width - 32,
+                        dropdownMenuEntries: const [
+                          DropdownMenuEntry(value: 'MALE', label: 'MALE'),
+                          DropdownMenuEntry(value: 'FEMALE', label: 'FEMALE'),
+                        ],
+                        label: const Text("Select Gender"),
+                        controller: _genderController,
+                        onSelected: (value) => member.gender = value ?? "",
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                keyboardType: TextInputType.text,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Education'),
-                  hintText: 'Enter Education',
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: DropdownButtonHideUnderline(
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownMenu<String>(
+                        width: MediaQuery.of(context).size.width - 32,
+                        menuHeight: 300,
+                        dropdownMenuEntries: bloodGroupList.map((e) {
+                          return DropdownMenuEntry(value: e, label: e);
+                        }).toList(),
+                        label: const Text("Select Blood Group"),
+                        controller: _bloodGroupController,
+                        onSelected: (value) => member.bloodGroup = value ?? "",
+                      ),
+                    ),
+                  ),
                 ),
-                onChanged: (value) => member.education = value,
-                controller: _educationController,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                keyboardType: TextInputType.text,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Occupation'),
-                  hintText: 'Enter Occupation',
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: DropdownButtonHideUnderline(
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownMenu<String>(
+                        width: MediaQuery.of(context).size.width - 32,
+                        dropdownMenuEntries: const [
+                          DropdownMenuEntry(
+                              value: 'Unmarried', label: 'Unmarried'),
+                          DropdownMenuEntry(value: 'Married', label: 'Married'),
+                        ],
+                        label: const Text("Select Marital Status"),
+                        controller: _maritalStatusController,
+                        onSelected: (value) =>
+                            member.maritalStatus = value ?? "",
+                      ),
+                    ),
+                  ),
                 ),
-                onChanged: (value) => member.occupation = value,
-                controller: _occupationController,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                keyboardType: TextInputType.text,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Office Contact'),
-                  hintText: 'Enter Office Contact',
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Education'),
+                      hintText: 'Enter Education',
+                    ),
+                    onChanged: (value) => member.education = value,
+                    controller: _educationController,
+                  ),
                 ),
-                onChanged: (value) => member.officeContact = value,
-                controller: _officeContactController,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                keyboardType: TextInputType.text,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Office Address'),
-                  hintText: 'Enter Office Address',
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Occupation'),
+                      hintText: 'Enter Occupation',
+                    ),
+                    onChanged: (value) => member.occupation = value,
+                    controller: _occupationController,
+                  ),
                 ),
-                onChanged: (value) => member.officeAddress = value,
-                controller: _officeAddressController,
-              ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Office Contact'),
+                      hintText: 'Enter Office Contact',
+                    ),
+                    onChanged: (value) => member.officeContact = value,
+                    controller: _officeContactController,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Office Address'),
+                      hintText: 'Enter Office Address',
+                    ),
+                    onChanged: (value) => member.officeAddress = value,
+                    controller: _officeAddressController,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurpleAccent,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () => _addMember(context),
+                    child: const Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+                      child: Text("Submit"),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
+  }
+
+  _addMember(BuildContext context) async {
+    member.name = _nameController.value.text;
+    member.mobileNo = _mobileController.value.text;
+    member.dob = _dateController.value.text;
+    member.relation = _relationController.value.text;
+    member.gender = _genderController.value.text;
+    member.bloodGroup = _bloodGroupController.value.text;
+    member.maritalStatus = _maritalStatusController.value.text;
+    member.education = _educationController.value.text;
+    member.occupation = _occupationController.value.text;
+    member.officeContact = _officeContactController.value.text;
+    member.officeAddress = _officeAddressController.value.text;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const Dialog(
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // The loading indicator
+                CircularProgressIndicator(),
+                SizedBox(
+                  height: 15,
+                ),
+                // Some text
+                Text('Updating...')
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (profileImage != null) {
+      await CloudStorage.upload(
+        "profile_pic/user_$contactNo/${member.profilePic}",
+        profileImage!.file.path,
+      );
+
+      await profileImage!.file.copy("$localPath/${member.profilePic}");
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    Provider.of<AppState>(context, listen: false)
+        .addMember(widget.memberId, member);
+
+    var user = Provider.of<AppState>(context, listen: false).user;
+
+    await UserRepository.updateUser(contactNo, user.toMap());
+
+    await SharedPref.setLoggedUser(user);
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      backgroundColor: Colors.green,
+      content: Text("Member Added Successfully"),
+      duration: Duration(seconds: 1),
+    ));
+
+    Future.delayed(const Duration(seconds: 1), () => Navigator.pop(context));
   }
 }

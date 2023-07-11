@@ -10,7 +10,7 @@ class SharedPref {
 
   static Future setLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setBool(loggedInPref, true);
+    await prefs.setBool(loggedInPref, true);
   }
 
   static Future<bool> getLoggedIn() async {
@@ -20,7 +20,7 @@ class SharedPref {
 
   static Future setString(String key, String value) async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setString(key, value);
+    await prefs.setString(key, value);
   }
 
   static Future<String> getString(String key) async {
@@ -30,7 +30,7 @@ class SharedPref {
 
   static Future setLoggedUser(User user) async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setString(loggedInUserPref, jsonEncode(user.toMap()));
+    await prefs.setString(loggedInUserPref, jsonEncode(user.toMap()));
   }
 
   static Future<Map> getLoggedUser() async {

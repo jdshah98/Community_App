@@ -1,8 +1,10 @@
 import 'package:community_app/app/components/dashboard_drawer.dart';
+import 'package:community_app/app/consumer/app_state.dart';
 import 'package:community_app/app/model/user.dart';
 import 'package:community_app/app/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,20 +15,19 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   bool isLoaded = false;
-  User user = User.empty();
-  String path = "";
-  String imagePath = "";
 
   @override
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, () async {
-      path = (await getApplicationDocumentsDirectory()).path;
-      user = User.fromMap(
+      var path = (await getApplicationDocumentsDirectory()).path;
+      var user = User.fromMap(
           (await SharedPref.getLoggedUser()) as Map<String, dynamic>);
-      imagePath = "$path/${user.members[0].profilePic}";
-
-      setState(() => isLoaded = true);
+      if (mounted) {
+        Provider.of<AppState>(context, listen: false).setUser(user);
+        Provider.of<AppState>(context, listen: false).setLocalPath(path);
+        setState(() => isLoaded = true);
+      }
     });
   }
 
@@ -38,12 +39,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: Colors.deepPurpleAccent,
         foregroundColor: Colors.white,
       ),
-      body: isLoaded
-          ? const Center(
-              child: Text("Welcome"),
-            )
-          : const CircularProgressIndicator(),
-      drawer: DashboardDrawer(user, path, isLoaded),
+      body: Center(
+        child: isLoaded
+            ? const Text("Welcome")
+            : const CircularProgressIndicator(),
+      ),
+      // drawer: DashboardDrawer(user, path, isLoaded),
+      drawer: DashboardDrawer(isLoaded),
     );
   }
 }

@@ -8,7 +8,7 @@ class User {
   String area;
   String nativePlace;
   String casteType;
-  List<Member> members;
+  Map<String, Member> members;
 
   User.empty()
       : contactNo = "",
@@ -18,18 +18,18 @@ class User {
         area = "",
         nativePlace = "",
         casteType = "",
-        members = List.empty();
+        members = <String, Member>{};
 
-  User(
-    this.contactNo,
-    this.password,
-    this.isAdmin,
-    this.address,
-    this.area,
-    this.nativePlace,
-    this.casteType,
-    this.members,
-  );
+  User({
+    required this.contactNo,
+    required this.password,
+    required this.isAdmin,
+    required this.address,
+    required this.area,
+    required this.nativePlace,
+    required this.casteType,
+    required this.members,
+  });
 
   Map<String, dynamic> toMap() {
     return {
@@ -40,7 +40,7 @@ class User {
       'Area': area,
       'Native_Place': nativePlace,
       'Caste_Type': casteType,
-      'Members': members.map((member) => member.toMap()).toList(),
+      'Members': members.map((key, value) => MapEntry(key, value.toMap())),
     };
   }
 
@@ -52,11 +52,13 @@ class User {
         area = map["Area"],
         nativePlace = map["Native_Place"],
         casteType = map["Caste_Type"],
-        members = List<Member>.from(
-          (map["Members"] as List<dynamic>).map(
-            (memberMap) => Member.fromMap(memberMap as Map<String, dynamic>),
-          ),
-        );
+        members = (map["Members"] as Map<String, dynamic>).map((key, value) =>
+            MapEntry(key, Member.fromMap(value as Map<String, dynamic>)));
+  // members = List<Member>.from(
+  //   (map["Members"] as List<dynamic>).map(
+  //     (memberMap) => Member.fromMap(memberMap as Map<String, dynamic>),
+  //   ),
+  // );
 
   @override
   String toString() {

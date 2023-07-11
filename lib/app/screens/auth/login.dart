@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final FocusNode _contactNode = FocusNode();
   final FocusNode _passwordNode = FocusNode();
 
-  late String path;
+  late String localPath;
 
   bool isContactChanged = false;
   bool isPasswordChanged = false;
@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void initState() {
-    getApplicationDocumentsDirectory().then((value) => path = value.path);
+    getApplicationDocumentsDirectory().then((value) => localPath = value.path);
     super.initState();
   }
 
@@ -217,17 +217,18 @@ class _LoginScreenState extends State<LoginScreen> {
         final User user = await UserRepository.getUser(contact);
         if (user.password == password) {
           SharedPref.setLoggedUser(user);
-          SharedPref.setString(SharedPref.loggedInContact, user.contactNo!);
+          SharedPref.setString(SharedPref.loggedInContact, user.contactNo);
           SharedPref.setLoggedIn();
-          for (var member in user.members!) {
-            if (member.profilePic != null) {
-              // Save Image in Local Storage
+
+          user.members.forEach((key, value) {
+            if (value.profilePic.isNotEmpty) {
               CloudStorage.fetchAndSaveToLocal(
-                "profile_pic/user_${user.contactNo}/${member.profilePic}",
-                "$path/${member.profilePic}",
+                "profile_pic/user_${user.contactNo}/${value.profilePic}",
+                "$localPath/${value.profilePic}",
               );
             }
-          }
+          });
+
           if (context.mounted) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(

@@ -1,34 +1,49 @@
 class Member {
   int memberId;
-  String? name;
-  String? mobileNo;
-  String? dob;
-  String? profilePic;
-  String? relation;
-  String? gender;
-  String? bloodGroup;
-  String? maritalStatus;
-  String? education;
-  String? occupation;
-  String? officeContact;
-  String? officeAddress;
-  bool? isMainMember;
+  String name;
+  String mobileNo;
+  String dob;
+  String profilePic;
+  String relation;
+  String gender;
+  String bloodGroup;
+  String maritalStatus;
+  String education;
+  String occupation;
+  String officeContact;
+  String officeAddress;
+  bool isMainMember;
+
+  Member.empty(this.memberId)
+      : name = "",
+        mobileNo = "",
+        dob = "",
+        profilePic = "",
+        relation = "",
+        gender = "",
+        bloodGroup = "",
+        maritalStatus = "",
+        education = "",
+        occupation = "",
+        officeContact = "",
+        officeAddress = "",
+        isMainMember = false;
 
   Member({
     required this.memberId,
-    this.name,
-    this.mobileNo,
-    this.dob,
-    this.profilePic,
-    this.relation,
-    this.gender,
-    this.bloodGroup,
-    this.maritalStatus,
-    this.education,
-    this.occupation,
-    this.officeContact,
-    this.officeAddress,
-    this.isMainMember,
+    required this.name,
+    required this.mobileNo,
+    required this.dob,
+    required this.profilePic,
+    required this.relation,
+    required this.gender,
+    required this.bloodGroup,
+    required this.maritalStatus,
+    required this.education,
+    required this.occupation,
+    required this.officeContact,
+    required this.officeAddress,
+    required this.isMainMember,
   });
 
   Map<String, dynamic> toMap() {
@@ -68,6 +83,6 @@ class Member {
 
   @override
   String toString() {
-    return 'Member{Id: $memberId, Name: $name, Mobile_No: $mobileNo, DOB: $dob}';
+    return 'Member{Id: $memberId, Name: $name, Mobile_No: $mobileNo, profilePic: $profilePic}';
   }
 }

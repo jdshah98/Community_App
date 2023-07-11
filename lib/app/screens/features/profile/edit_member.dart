@@ -1,29 +1,28 @@
 import 'dart:io';
 
 import 'package:community_app/app/constants/arrays.dart';
-import 'package:community_app/app/model/member.dart';
+import 'package:community_app/app/consumer/app_state.dart';
 import 'package:community_app/app/constants/images.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:community_app/app/repository/storage.dart';
+import 'package:community_app/app/repository/user.dart';
+import 'package:community_app/app/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' show extension;
+import 'package:provider/provider.dart';
 
 class EditMember extends StatefulWidget {
-  const EditMember(this.contactNo, this.path, this.member, {super.key});
+  const EditMember(this.memberId, {super.key});
 
-  final String contactNo;
-  final String path;
-  final Member member;
+  final int memberId;
 
   @override
   State<EditMember> createState() => _EditMemberState();
 }
 
 class _EditMemberState extends State<EditMember> {
-  final Reference storageRef = FirebaseStorage.instance.ref("profile_pic");
-
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
@@ -42,9 +41,18 @@ class _EditMemberState extends State<EditMember> {
   final ImagePicker _picker = ImagePicker();
   final DateFormat dateformatter = DateFormat("dd-MM-yyyy");
 
-  void _openImagePicker(ImageSource source) async {
+  FileImage? profileImage;
+  String profileImageName = "";
+  bool isImageUpdated = false;
+
+  late String localPath;
+  late String contactNo;
+
+  Future<String?> _openImagePicker(ImageSource source) async {
     final XFile? pickedImage = await _picker.pickImage(
-        source: source, preferredCameraDevice: CameraDevice.front);
+      source: source,
+      preferredCameraDevice: CameraDevice.front,
+    );
     if (pickedImage != null) {
       CroppedFile? croppedFile = await ImageCropper().cropImage(
         sourcePath: pickedImage.path,
@@ -67,28 +75,29 @@ class _EditMemberState extends State<EditMember> {
       );
       if (croppedFile != null) {
         final String imageName =
-            "member_${widget.member.memberId}${extension(croppedFile.path)}";
-        final imageRef =
-            storageRef.child("user_${widget.contactNo}/$imageName");
-        File inputFile = File(croppedFile.path);
-        await imageRef.putFile(inputFile);
-        // final downloadUrl = await imageRef.getDownloadURL();
-        // debugPrint("Url: $downloadUrl");
-        inputFile.copy("${widget.path}/$imageName");
+            "member_${widget.memberId}${extension(croppedFile.path)}";
 
+        File inputFile = File(croppedFile.path);
+        await Directory("$localPath/temp").create();
+        await inputFile.copy("$localPath/temp/$imageName");
+
+        // debugPrint("Done - $imageName");
         setState(() {
-          widget.member.profilePic = imageName;
+          profileImageName = imageName;
         });
+        return "temp/$imageName";
       } else {
-        debugPrint("Cancelled Crop");
+        // debugPrint("Cancelled Crop");
+        return null;
       }
     } else {
-      debugPrint("Cancelled Image");
+      // debugPrint("Cancelled Image");
+      return null;
     }
   }
 
-  void _showModalBottomSheet(BuildContext context) {
-    showModalBottomSheet(
+  Future<String?> _showModalBottomSheet(BuildContext context) {
+    return showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(),
       builder: (context) {
@@ -106,10 +115,14 @@ class _EditMemberState extends State<EditMember> {
                     const Text(
                       "Profile photo",
                       style: TextStyle(
-                          fontSize: 18, color: Colors.deepPurpleAccent),
+                        fontSize: 18,
+                        color: Colors.deepPurpleAccent,
+                      ),
                     ),
                     InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context, "DELETE_IMAGE");
+                      },
                       splashColor: Colors.grey.shade200,
                       child: const Icon(
                         Icons.delete,
@@ -123,9 +136,12 @@ class _EditMemberState extends State<EditMember> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   InkWell(
-                    onTap: () {
-                      _openImagePicker(ImageSource.camera);
-                      Navigator.pop(context);
+                    onTap: () async {
+                      String? imageName =
+                          await _openImagePicker(ImageSource.camera);
+                      if (mounted) {
+                        Navigator.pop(context, imageName);
+                      }
                     },
                     splashColor: Colors.grey.shade200,
                     child: Column(
@@ -156,9 +172,12 @@ class _EditMemberState extends State<EditMember> {
                     ),
                   ),
                   InkWell(
-                    onTap: () {
-                      _openImagePicker(ImageSource.gallery);
-                      Navigator.pop(context);
+                    onTap: () async {
+                      String? imageName =
+                          await _openImagePicker(ImageSource.gallery);
+                      if (mounted) {
+                        Navigator.pop(context, imageName);
+                      }
                     },
                     splashColor: Colors.grey.shade200,
                     child: Column(
@@ -200,258 +219,389 @@ class _EditMemberState extends State<EditMember> {
   @override
   void initState() {
     super.initState();
-    _nameController.text = widget.member.name ?? "";
-    _mobileController.text = widget.member.mobileNo ?? "";
-    _dateController.text =
-        widget.member.dob ?? dateformatter.format(DateTime.now());
-    debugPrint(widget.member.relation);
-    _relationController.text = widget.member.relation ?? "";
-    _genderController.text = widget.member.gender ?? "";
-    _bloodGroupController.text = widget.member.bloodGroup ?? "";
-    _maritalStatusController.text = widget.member.maritalStatus ?? "";
-    _educationController.text = widget.member.education ?? "";
-    _occupationController.text = widget.member.occupation ?? "";
-    _officeContactController.text = widget.member.officeContact ?? "";
-    _officeAddressController.text = widget.member.officeAddress ?? "";
+    localPath = Provider.of<AppState>(context, listen: false).localPath;
+    contactNo = Provider.of<AppState>(context, listen: false).user.contactNo;
+    var member = Provider.of<AppState>(context, listen: false)
+        .user
+        .members
+        .entries
+        .singleWhere((element) => element.key == widget.memberId.toString())
+        .value;
+
+    if (member.profilePic.isNotEmpty) {
+      profileImage = FileImage(File("$localPath/${member.profilePic}"));
+    }
+    _nameController.text = member.name;
+    _mobileController.text = member.mobileNo;
+    _dateController.text = member.dob.isNotEmpty
+        ? member.dob
+        : dateformatter.format(DateTime.now());
+    _relationController.text = member.relation;
+    _genderController.text = member.gender;
+    _bloodGroupController.text = member.bloodGroup;
+    _maritalStatusController.text = member.maritalStatus;
+    _educationController.text = member.education;
+    _occupationController.text = member.occupation;
+    _officeContactController.text = member.officeContact;
+    _officeAddressController.text = member.officeAddress;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Edit Member",
-          style: TextStyle(letterSpacing: 0.1),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => {},
-            child: const Padding(
-              padding: EdgeInsets.only(right: 8),
-              child: Text(
-                "Save",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  letterSpacing: 0.1,
-                ),
-              ),
+    return Consumer<AppState>(
+      builder: (context, state, child) {
+        final member = state.user.members.entries
+            .singleWhere((element) => element.key == widget.memberId.toString())
+            .value;
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              "Edit Member",
+              style: TextStyle(letterSpacing: 0.1),
             ),
-          )
-        ],
-        backgroundColor: Colors.deepPurpleAccent,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Container(
-              height: 170,
-              alignment: Alignment.center,
-              child: Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: widget.member.profilePic != null
-                          ? DecorationImage(
-                              fit: BoxFit.cover,
-                              image: FileImage(File(
-                                  "${widget.path}/${widget.member.profilePic}")),
-                            )
-                          : const DecorationImage(
-                              fit: BoxFit.cover,
-                              image: AssetImage(avatar),
-                            ),
+            actions: [
+              TextButton(
+                onPressed: () => _saveProfile(context),
+                child: const Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: Text(
+                    "Save",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      letterSpacing: 0.1,
                     ),
                   ),
-                  FloatingActionButton.small(
-                    shape: const CircleBorder(),
-                    onPressed: () => _showModalBottomSheet(context),
-                    child: const Icon(Icons.camera_alt),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                keyboardType: TextInputType.name,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Name'),
-                  hintText: 'Enter Name',
-                ),
-                controller: _nameController,
-                onChanged: (value) => widget.member.name = value,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                canRequestFocus: !(widget.member.isMainMember ?? false),
-                readOnly: widget.member.isMainMember ?? false,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Mobile'),
-                  hintText: 'Enter Mobile',
-                ),
-                controller: _mobileController,
-                onChanged: (value) => widget.member.mobileNo = value,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                readOnly: true,
-                keyboardType: TextInputType.none,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text("D.O.B."),
-                ),
-                controller: _dateController,
-                onTap: () => showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(1900),
-                  lastDate: DateTime.now(),
-                ).then((value) {
-                  if (value != null) {
-                    _dateController.text = dateformatter.format(value);
-                  }
-                }),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: DropdownButtonHideUnderline(
-                child: ButtonTheme(
-                  alignedDropdown: true,
-                  child: DropdownMenu<String>(
-                    width: MediaQuery.of(context).size.width - 32,
-                    menuHeight: 300,
-                    dropdownMenuEntries: relationList.map((e) {
-                      return DropdownMenuEntry(value: e, label: e);
-                    }).toList(),
-                    label: const Text("Select Relation"),
-                    controller: _relationController,
-                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: DropdownButtonHideUnderline(
-                child: ButtonTheme(
-                  alignedDropdown: true,
-                  child: DropdownMenu<String>(
-                    width: MediaQuery.of(context).size.width - 32,
-                    dropdownMenuEntries: const [
-                      DropdownMenuEntry(value: 'MALE', label: 'MALE'),
-                      DropdownMenuEntry(value: 'FEMALE', label: 'FEMALE'),
+            ],
+            backgroundColor: Colors.deepPurpleAccent,
+            foregroundColor: Colors.white,
+          ),
+          body: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                  height: 170,
+                  alignment: Alignment.center,
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: profileImage != null
+                              ? DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: profileImage!,
+                                )
+                              : const DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: AssetImage(avatar),
+                                ),
+                        ),
+                      ),
+                      FloatingActionButton.small(
+                        shape: const CircleBorder(),
+                        onPressed: () {
+                          _showModalBottomSheet(context).then((value) {
+                            if (value != null) {
+                              if (value == "DELETE_IMAGE") {
+                                profileImage!.evict().then((success) {
+                                  setState(() {
+                                    profileImage = null;
+                                    isImageUpdated = true;
+                                  });
+                                });
+                              } else {
+                                if (profileImage != null) {
+                                  profileImage!.evict().then((success) {
+                                    setState(() {
+                                      profileImage = FileImage(
+                                        File("${state.localPath}/$value"),
+                                      );
+                                      isImageUpdated = true;
+                                    });
+                                  });
+                                } else {
+                                  setState(() {
+                                    profileImage = FileImage(
+                                      File("${state.localPath}/$value"),
+                                    );
+                                    isImageUpdated = true;
+                                  });
+                                }
+                              }
+                            }
+                          });
+                        },
+                        child: const Icon(Icons.camera_alt),
+                      ),
                     ],
-                    label: const Text("Select Gender"),
-                    controller: _genderController,
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: DropdownButtonHideUnderline(
-                child: ButtonTheme(
-                  alignedDropdown: true,
-                  child: DropdownMenu<String>(
-                    width: MediaQuery.of(context).size.width - 32,
-                    menuHeight: 300,
-                    dropdownMenuEntries: bloodGroupList.map((e) {
-                      return DropdownMenuEntry(value: e, label: e);
-                    }).toList(),
-                    label: const Text("Select Blood Group"),
-                    controller: _bloodGroupController,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    keyboardType: TextInputType.name,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Name'),
+                      hintText: 'Enter Name',
+                    ),
+                    controller: _nameController,
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: DropdownButtonHideUnderline(
-                child: ButtonTheme(
-                  alignedDropdown: true,
-                  child: DropdownMenu<String>(
-                    width: MediaQuery.of(context).size.width - 32,
-                    dropdownMenuEntries: const [
-                      DropdownMenuEntry(value: 'Unmarried', label: 'Unmarried'),
-                      DropdownMenuEntry(value: 'Married', label: 'Married'),
-                    ],
-                    label: const Text("Select Marital Status"),
-                    controller: _maritalStatusController,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    canRequestFocus: !(member.isMainMember),
+                    readOnly: member.isMainMember,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Mobile'),
+                      hintText: 'Enter Mobile',
+                    ),
+                    controller: _mobileController,
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                keyboardType: TextInputType.text,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Education'),
-                  hintText: 'Enter Education',
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    readOnly: true,
+                    keyboardType: TextInputType.none,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text("D.O.B."),
+                    ),
+                    controller: _dateController,
+                    onTap: () => showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                    ).then((value) {
+                      if (value != null) {
+                        _dateController.text = dateformatter.format(value);
+                      }
+                    }),
+                  ),
                 ),
-                onChanged: (value) => widget.member.education = value,
-                controller: _educationController,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                keyboardType: TextInputType.text,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Occupation'),
-                  hintText: 'Enter Occupation',
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: DropdownButtonHideUnderline(
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownMenu<String>(
+                        width: MediaQuery.of(context).size.width - 32,
+                        menuHeight: 300,
+                        dropdownMenuEntries: relationList.map((e) {
+                          return DropdownMenuEntry(value: e, label: e);
+                        }).toList(),
+                        label: const Text("Select Relation"),
+                        controller: _relationController,
+                        onSelected: (value) => value ?? "",
+                      ),
+                    ),
+                  ),
                 ),
-                onChanged: (value) => widget.member.occupation = value,
-                controller: _occupationController,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                keyboardType: TextInputType.text,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Office Contact'),
-                  hintText: 'Enter Office Contact',
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: DropdownButtonHideUnderline(
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownMenu<String>(
+                        width: MediaQuery.of(context).size.width - 32,
+                        dropdownMenuEntries: const [
+                          DropdownMenuEntry(value: 'MALE', label: 'MALE'),
+                          DropdownMenuEntry(value: 'FEMALE', label: 'FEMALE'),
+                        ],
+                        label: const Text("Select Gender"),
+                        controller: _genderController,
+                        onSelected: (value) => value ?? "",
+                      ),
+                    ),
+                  ),
                 ),
-                onChanged: (value) => widget.member.officeContact = value,
-                controller: _officeContactController,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: TextField(
-                keyboardType: TextInputType.text,
-                minLines: 1,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: Text('Office Address'),
-                  hintText: 'Enter Office Address',
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: DropdownButtonHideUnderline(
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownMenu<String>(
+                        width: MediaQuery.of(context).size.width - 32,
+                        menuHeight: 300,
+                        dropdownMenuEntries: bloodGroupList.map((e) {
+                          return DropdownMenuEntry(value: e, label: e);
+                        }).toList(),
+                        label: const Text("Select Blood Group"),
+                        controller: _bloodGroupController,
+                        onSelected: (value) => value ?? "",
+                      ),
+                    ),
+                  ),
                 ),
-                onChanged: (value) => widget.member.officeAddress = value,
-                controller: _officeAddressController,
-              ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: DropdownButtonHideUnderline(
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownMenu<String>(
+                        width: MediaQuery.of(context).size.width - 32,
+                        dropdownMenuEntries: const [
+                          DropdownMenuEntry(
+                              value: 'Unmarried', label: 'Unmarried'),
+                          DropdownMenuEntry(value: 'Married', label: 'Married'),
+                        ],
+                        label: const Text("Select Marital Status"),
+                        controller: _maritalStatusController,
+                        onSelected: (value) => value ?? "",
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Education'),
+                      hintText: 'Enter Education',
+                    ),
+                    controller: _educationController,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Occupation'),
+                      hintText: 'Enter Occupation',
+                    ),
+                    controller: _occupationController,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Office Contact'),
+                      hintText: 'Enter Office Contact',
+                    ),
+                    controller: _officeContactController,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    minLines: 1,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      label: Text('Office Address'),
+                      hintText: 'Enter Office Address',
+                    ),
+                    controller: _officeAddressController,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
+  }
+
+  _saveProfile(BuildContext context) async {
+    var member = Provider.of<AppState>(context, listen: false)
+        .user
+        .members
+        .entries
+        .singleWhere((element) => element.key == widget.memberId.toString())
+        .value;
+    member.name = _nameController.value.text;
+    member.mobileNo = _mobileController.value.text;
+    member.dob = _dateController.value.text;
+    if (isImageUpdated) {
+      member.profilePic = profileImageName;
+    }
+    member.relation = _relationController.value.text;
+    member.gender = _genderController.value.text;
+    member.bloodGroup = _bloodGroupController.value.text;
+    member.maritalStatus = _maritalStatusController.value.text;
+    member.education = _educationController.value.text;
+    member.occupation = _occupationController.value.text;
+    member.officeContact = _officeContactController.value.text;
+    member.officeAddress = _officeAddressController.value.text;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const Dialog(
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(
+                  height: 15,
+                ),
+                Text('Updating...'),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (profileImage != null) {
+      await CloudStorage.upload(
+        "profile_pic/user_$contactNo/${member.profilePic}",
+        profileImage!.file.path,
+      );
+
+      await profileImage!.file.copy("$localPath/${member.profilePic}");
+    } else {
+      // delete profile pic
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    Provider.of<AppState>(context, listen: false)
+        .updateMember(widget.memberId, member);
+
+    var user = Provider.of<AppState>(context, listen: false).user;
+
+    await UserRepository.updateUser(contactNo, user.toMap());
+
+    await SharedPref.setLoggedUser(user);
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      backgroundColor: Colors.green,
+      content: Text("Updated Successfully"),
+      duration: Duration(seconds: 1),
+    ));
+
+    Future.delayed(const Duration(seconds: 1), () => Navigator.pop(context));
   }
 }
