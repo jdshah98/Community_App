@@ -54,11 +54,6 @@ class User {
         casteType = map["Caste_Type"],
         members = (map["Members"] as Map<String, dynamic>).map((key, value) =>
             MapEntry(key, Member.fromMap(value as Map<String, dynamic>)));
-  // members = List<Member>.from(
-  //   (map["Members"] as List<dynamic>).map(
-  //     (memberMap) => Member.fromMap(memberMap as Map<String, dynamic>),
-  //   ),
-  // );
 
   @override
   String toString() {

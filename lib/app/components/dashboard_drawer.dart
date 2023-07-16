@@ -7,8 +7,6 @@ import 'package:community_app/app/screens/auth/login.dart';
 import 'package:community_app/app/screens/features/address_book.dart';
 import 'package:community_app/app/screens/features/committee.dart';
 import 'package:community_app/app/screens/features/events.dart';
-import 'package:community_app/app/screens/features/jobs.dart';
-import 'package:community_app/app/screens/features/matrimony.dart';
 import 'package:community_app/app/screens/features/message_list.dart';
 import 'package:community_app/app/screens/features/profile/profile.dart';
 import 'package:community_app/app/shared_pref.dart';
@@ -188,62 +186,6 @@ class DashboardDrawer extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => const EventScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    ListTile(
-                      title: const Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(right: 12),
-                            child: Icon(
-                              Icons.work,
-                              color: Colors.deepPurpleAccent,
-                              size: dashboardItemIconSize,
-                            ),
-                          ),
-                          Text(
-                            'Jobs',
-                            style: TextStyle(color: Colors.deepPurpleAccent),
-                          ),
-                        ],
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const JobScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    ListTile(
-                      title: const Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(right: 12),
-                            child: Icon(
-                              Icons.favorite,
-                              color: Colors.deepPurpleAccent,
-                              size: dashboardItemIconSize,
-                            ),
-                          ),
-                          Text(
-                            'Matrimony',
-                            style: TextStyle(color: Colors.deepPurpleAccent),
-                          ),
-                        ],
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MatrimonyScreen(),
                           ),
                         );
                       },
