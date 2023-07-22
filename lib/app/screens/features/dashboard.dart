@@ -23,6 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       var path = (await getApplicationDocumentsDirectory()).path;
       var user = User.fromMap(
           (await SharedPref.getLoggedUser()) as Map<String, dynamic>);
+      debugPrint(user.toString());
       if (mounted) {
         Provider.of<AppState>(context, listen: false).setUser(user);
         Provider.of<AppState>(context, listen: false).setLocalPath(path);

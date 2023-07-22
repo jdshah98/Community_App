@@ -10,7 +10,9 @@ class UserRepository {
       FirebaseFirestore.instance.collection("users");
 
   static Future<User> getUser(String contact) async {
-    final snapshot = await _usersRef.doc(contact).get();
+    final snapshot = await _usersRef
+        .doc(contact)
+        .get(const GetOptions(source: Source.cache));
     if (!snapshot.exists) {
       throw DataNotFound("Member Not Found!!");
     }

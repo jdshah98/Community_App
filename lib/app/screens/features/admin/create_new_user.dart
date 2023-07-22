@@ -1,14 +1,13 @@
-import 'package:community_app/app/repository/user.dart';
 import 'package:flutter/material.dart';
 
-class AddressBook extends StatefulWidget {
-  const AddressBook({super.key});
+class CreateUser extends StatefulWidget {
+  const CreateUser({super.key});
 
   @override
-  State<AddressBook> createState() => _AddressBookState();
+  State<CreateUser> createState() => _CreateUserState();
 }
 
-class _AddressBookState extends State<AddressBook> {
+class _CreateUserState extends State<CreateUser> {
   final TextEditingController _mobileController = TextEditingController();
 
   @override
@@ -16,7 +15,7 @@ class _AddressBookState extends State<AddressBook> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Address Book",
+          "New Account",
           style: TextStyle(letterSpacing: 0.1),
         ),
         backgroundColor: Colors.deepPurpleAccent,
@@ -43,10 +42,10 @@ class _AddressBookState extends State<AddressBook> {
                 backgroundColor: Colors.deepPurpleAccent,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () => _searchAddress(),
+              onPressed: () => _createAccount(),
               child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-                child: Text("Search"),
+                child: Text("Create Account"),
               ),
             ),
           ),
@@ -55,14 +54,5 @@ class _AddressBookState extends State<AddressBook> {
     );
   }
 
-  _searchAddress() async {
-    final mobileNumber = _mobileController.value.text.trim();
-
-    if (mobileNumber.isEmpty) {
-      return;
-    }
-
-    final searchedUser = await UserRepository.getUser(mobileNumber);
-    debugPrint(searchedUser.toString());
-  }
+  _createAccount() {}
 }

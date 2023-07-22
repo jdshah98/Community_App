@@ -11,6 +11,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations(
       [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -30,26 +31,28 @@ class MyApp extends StatelessWidget {
           ),
           useMaterial3: true,
         ),
-        home: FutureBuilder(
-          future: Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          ),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              return const SplashScreen();
-            }
-            return const Scaffold(
-              backgroundColor: Colors.deepPurpleAccent,
-              body: Center(
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                ),
-              ),
-            );
-          },
-        ),
+        home: const SplashScreen(),
         debugShowCheckedModeBanner: false,
       ),
     );
   }
 }
+
+        // home: FutureBuilder(
+        //   future: Firebase.initializeApp(
+        //     options: DefaultFirebaseOptions.currentPlatform,
+        //   ),
+        //   builder: (context, snapshot) {
+        //     if (snapshot.connectionState == ConnectionState.done) {
+        //       return const SplashScreen();
+        //     }
+        //     return const Scaffold(
+        //       backgroundColor: Colors.deepPurpleAccent,
+        //       body: Center(
+        //         child: CircularProgressIndicator(
+        //           color: Colors.white,
+        //         ),
+        //       ),
+        //     );
+        //   },
+        // ),

@@ -6,7 +6,7 @@ class ViewAddScreen extends StatelessWidget {
   final Widget redirectWidget;
 
   static const String _addBannerImageUrl =
-      "https://firebasestorage.googleapis.com/v0/b/community-app-c1b2b.appspot.com/o/add_banner%2Fadd_banner.png?alt=media&token=02be13f1-ed02-4b4b-8561-9f7468dd92ba";
+      "https://firebasestorage.googleapis.com/v0/b/community-app-c1b2b.appspot.com/o/add_banner%2Fadd_banner.png?alt=media&token=676213ba-6a55-4fa2-9755-d1ccb65f7484";
 
   @override
   Widget build(BuildContext context) {

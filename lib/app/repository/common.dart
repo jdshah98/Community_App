@@ -8,7 +8,9 @@ class CommonRepository {
       FirebaseFirestore.instance.collection("common");
 
   static Future<List<CommitteeMember>> getAllCommitteeMembers() async {
-    final snapshot = await _commonRef.doc("Committee").get();
+    final snapshot = await _commonRef
+        .doc("Committee")
+        .get(const GetOptions(source: Source.cache));
     if (!snapshot.exists) {
       return [];
     }

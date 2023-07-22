@@ -1,14 +1,14 @@
 import 'package:community_app/app/repository/user.dart';
 import 'package:flutter/material.dart';
 
-class AddressBook extends StatefulWidget {
-  const AddressBook({super.key});
+class MemberSearch extends StatefulWidget {
+  const MemberSearch({super.key});
 
   @override
-  State<AddressBook> createState() => _AddressBookState();
+  State<MemberSearch> createState() => _MemberSearchState();
 }
 
-class _AddressBookState extends State<AddressBook> {
+class _MemberSearchState extends State<MemberSearch> {
   final TextEditingController _mobileController = TextEditingController();
 
   @override
@@ -16,7 +16,7 @@ class _AddressBookState extends State<AddressBook> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Address Book",
+          "Member Search",
           style: TextStyle(letterSpacing: 0.1),
         ),
         backgroundColor: Colors.deepPurpleAccent,
@@ -43,7 +43,7 @@ class _AddressBookState extends State<AddressBook> {
                 backgroundColor: Colors.deepPurpleAccent,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () => _searchAddress(),
+              onPressed: () => _searchMember(),
               child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
                 child: Text("Search"),
@@ -55,7 +55,7 @@ class _AddressBookState extends State<AddressBook> {
     );
   }
 
-  _searchAddress() async {
+  _searchMember() async {
     final mobileNumber = _mobileController.value.text.trim();
 
     if (mobileNumber.isEmpty) {

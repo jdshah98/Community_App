@@ -35,7 +35,8 @@ class _MessageListScreenState extends State<MessageListScreen> {
               StreamBuilder<QuerySnapshot>(
                 stream: MessageRepository.getMessageRef()
                     .orderBy("Timestamp")
-                    .snapshots(),
+                    .get(const GetOptions(source: Source.cache))
+                    .asStream(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return const Text('Something went wrong');
