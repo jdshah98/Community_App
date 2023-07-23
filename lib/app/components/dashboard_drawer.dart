@@ -8,7 +8,7 @@ import 'package:community_app/app/screens/features/address_book.dart';
 import 'package:community_app/app/screens/features/admin/member_search.dart';
 import 'package:community_app/app/screens/features/committee.dart';
 import 'package:community_app/app/screens/features/events.dart';
-import 'package:community_app/app/screens/features/message_list.dart';
+import 'package:community_app/app/screens/features/chat.dart';
 import 'package:community_app/app/screens/features/profile/profile.dart';
 import 'package:community_app/app/shared_pref.dart';
 import 'package:flutter/material.dart';
@@ -132,7 +132,7 @@ class DashboardDrawer extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const MessageListScreen(),
+                                builder: (context) => const ChatScreen(),
                               ),
                             );
                           },

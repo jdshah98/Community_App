@@ -37,22 +37,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-        // home: FutureBuilder(
-        //   future: Firebase.initializeApp(
-        //     options: DefaultFirebaseOptions.currentPlatform,
-        //   ),
-        //   builder: (context, snapshot) {
-        //     if (snapshot.connectionState == ConnectionState.done) {
-        //       return const SplashScreen();
-        //     }
-        //     return const Scaffold(
-        //       backgroundColor: Colors.deepPurpleAccent,
-        //       body: Center(
-        //         child: CircularProgressIndicator(
-        //           color: Colors.white,
-        //         ),
-        //       ),
-        //     );
-        //   },
-        // ),
