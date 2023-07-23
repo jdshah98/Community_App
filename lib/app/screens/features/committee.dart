@@ -22,43 +22,45 @@ class Committee extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             debugPrint(snapshot.data.toString());
-            List<CommitteeMember>? members = snapshot.data;
-            return SingleChildScrollView(
-              child: Column(
-                children: members!
-                    .map(
-                      (member) => Card(
-                        elevation: 5,
-                        margin: const EdgeInsets.all(16),
-                        surfaceTintColor: Colors.grey.shade300,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.only(right: 16),
-                                child: Image(
-                                  image: AssetImage(avatar),
-                                  width: 80,
-                                  height: 80,
+            if (snapshot.hasData) {
+              List<CommitteeMember> members = snapshot.data;
+              return SingleChildScrollView(
+                child: Column(
+                  children: members
+                      .map(
+                        (member) => Card(
+                          elevation: 5,
+                          margin: const EdgeInsets.all(16),
+                          surfaceTintColor: Colors.grey.shade300,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(right: 16),
+                                  child: Image(
+                                    image: AssetImage(avatar),
+                                    width: 80,
+                                    height: 80,
+                                  ),
                                 ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(member.designation),
-                                  Text(member.name),
-                                  Text(member.mobileNo),
-                                ],
-                              ),
-                            ],
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(member.designation),
+                                    Text(member.name),
+                                    Text(member.mobileNo),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            );
+                      )
+                      .toList(),
+                ),
+              );
+            }
           }
           return const Center(child: CircularProgressIndicator());
         },
