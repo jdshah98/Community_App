@@ -204,7 +204,17 @@ class MessageStorage with ChangeNotifier {
     _fetchMessages();
   }
 
-  void _fetchMessages() {
+  void _fetchMessages() async {
+    var snapshot = await MessageRepository.getMessageRef()
+        .orderBy("Timestamp", descending: true)
+        .get(const GetOptions(source: Source.cache));
+
+    messages = snapshot.docs
+        .map((doc) => Message.fromMap(doc.data()! as Map<String, dynamic>))
+        .toList();
+  }
+
+  void updated() {
     MessageRepository.getMessageRef()
         .orderBy("Timestamp", descending: true)
         .get(const GetOptions(source: Source.cache))
@@ -214,9 +224,5 @@ class MessageStorage with ChangeNotifier {
           .toList();
       notifyListeners();
     });
-  }
-
-  void updated() {
-    _fetchMessages();
   }
 }

@@ -23,7 +23,7 @@ class Committee extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.done) {
             debugPrint(snapshot.data.toString());
             if (snapshot.hasData) {
-              List<CommitteeMember> members = snapshot.data;
+              List<CommitteeMember> members = snapshot.data!;
               return SingleChildScrollView(
                 child: Column(
                   children: members

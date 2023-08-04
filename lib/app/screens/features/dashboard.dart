@@ -20,7 +20,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, () async {
-      var path = (await getApplicationDocumentsDirectory()).path;
+      var path = await SharedPref.getString(SharedPref.localPath);
       var user = User.fromMap(
           (await SharedPref.getLoggedUser()) as Map<String, dynamic>);
       debugPrint(user.toString());

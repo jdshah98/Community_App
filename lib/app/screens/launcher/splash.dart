@@ -36,6 +36,7 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     final isConnected = await Utils.isInternetConnected();
     if (isConnected) {
+      debugPrint("Hello Connected!! : $isConnected");
       Future.delayed(
         const Duration(seconds: 2),
         () => Navigator.pushReplacement(
@@ -47,6 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       );
     } else {
+      debugPrint("Not COnnected");
       Future.delayed(
         const Duration(seconds: 2),
         () => setState(() => isInternetConnected = false),

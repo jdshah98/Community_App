@@ -29,17 +29,21 @@ class _LoginScreenState extends State<LoginScreen> {
   final FocusNode _contactNode = FocusNode();
   final FocusNode _passwordNode = FocusNode();
 
-  late String localPath;
+  String localPath = "";
 
   bool isContactChanged = false;
   bool isPasswordChanged = false;
   bool showPassword = false;
   bool isLoginDisabled = false;
 
+  fetchLocalPath() async {
+    localPath = (await getApplicationDocumentsDirectory()).path;
+  }
+
   @override
   void initState() {
-    getApplicationDocumentsDirectory().then((value) => localPath = value.path);
     super.initState();
+    fetchLocalPath();
   }
 
   @override
@@ -219,6 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
           SharedPref.setLoggedUser(user);
           SharedPref.setString(SharedPref.loggedInContact, user.contactNo);
           SharedPref.setLoggedIn();
+          SharedPref.setString(SharedPref.localPath, localPath);
 
           user.members.forEach((key, value) {
             if (value.profilePic.isNotEmpty) {
@@ -256,8 +261,9 @@ class _LoginScreenState extends State<LoginScreen> {
           const Duration(seconds: 2),
           () => setState(() => isLoginDisabled = false),
         );
-      } on Exception {
-        debugPrint("Login Exception");
+      } catch (e) {
+        debugPrint("Login Exception: ");
+        debugPrint(e.toString());
         showSnackbar("Server Error!!");
         Future.delayed(
           const Duration(seconds: 2),
